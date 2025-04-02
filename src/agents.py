@@ -1,21 +1,118 @@
 from typing import Dict, Any, List
 from langgraph.graph import Graph, StateGraph
-from langchain.agents import AgentExecutor, create_structured_chat_agent
-from langchain.chat_models import ChatOpenAI
-from langchain.tools import Tool
+from langchain.agents import AgentExecutor
+from langchain.agents import initialize_agent, Tool
+from langchain_community.chat_models import ChatOpenAI
 from loguru import logger
 import redis
 import json
 from datetime import datetime
+from langchain.chat_models.base import BaseChatModel
+from langchain.schema import AIMessage, HumanMessage, SystemMessage
+import requests
+import os
+from dotenv import load_dotenv
+from pydantic import Field, BaseModel
+
+class DeepSeekR1(BaseChatModel):
+    """DeepSeek-R1 模型的LangChain包装器 (硅基流动平台)"""
+    
+    api_key: str = Field(...)  # 必需字段
+    api_base: str = Field(default="https://api.siliconflow.cn/v1")
+    model_name: str = Field(default="deepseek-ai/DeepSeek-R1")
+    temperature: float = Field(default=0)
+    
+    class Config:
+        """配置类"""
+        arbitrary_types_allowed = True
+    
+    @property
+    def _llm_type(self) -> str:
+        """返回LLM类型标识符"""
+        return "deepseek-r1"
+        
+    def _generate(self, messages, stop=None):
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        # 转换LangChain消息格式为DeepSeek格式
+        deepseek_messages = []
+        for message in messages:
+            if isinstance(message, SystemMessage):
+                deepseek_messages.append({"role": "system", "content": message.content})
+            elif isinstance(message, HumanMessage):
+                deepseek_messages.append({"role": "user", "content": message.content})
+            elif isinstance(message, AIMessage):
+                deepseek_messages.append({"role": "assistant", "content": message.content})
+        
+        payload = {
+            "model": self.model_name,
+            "messages": deepseek_messages,
+            "temperature": self.temperature,
+        }
+        
+        if stop:
+            payload["stop"] = stop
+            
+        response = requests.post(f"{self.api_base}/chat/completions", 
+                                headers=headers, 
+                                json=payload)
+        response.raise_for_status()
+        
+        result = response.json()
+        return AIMessage(content=result["choices"][0]["message"]["content"])
+    
+    async def _agenerate(self, messages, stop=None):
+        # 异步实现可以在这里添加
+        raise NotImplementedError("异步生成尚未实现")
+
+    def test_model(self):
+        """测试模型是否正常工作"""
+        try:
+            response = self.llm._generate([
+                SystemMessage(content="你是一个有帮助的AI助手。"),
+                HumanMessage(content="你好，请用一句话介绍自己。")
+            ])
+            return {
+                "success": True,
+                "response": response.content
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
+            }
 
 class AccountProcessor:
     def __init__(self, db_manager, config: Dict[str, Any]):
         self.db_manager = db_manager
         self.config = config
-        self.llm = ChatOpenAI(
-            model_name=config.get("llm_model", "gpt-4"),
-            temperature=0
-        )
+        
+        # 首先获取模型类型
+        model_type = config.get("model_type", "openai")
+        
+        # 然后检查API密钥
+        if "deepseek_api_key" not in config and model_type in ["deepseek", "siliconflow"]:
+            config["deepseek_api_key"] = "sk-qsybuxxdlcvuhmtmbollzxzxvkwzqzxbkmbockxpujpcjyfk"
+        
+        # 根据配置选择使用的LLM模型
+        if model_type == "openai":
+            self.llm = ChatOpenAI(
+                model_name=config.get("llm_model", "gpt-4"),
+                temperature=0
+            )
+        elif model_type == "deepseek" or model_type == "siliconflow":
+            self.llm = DeepSeekR1(
+                api_key=config.get("deepseek_api_key"),
+                api_base=config.get("deepseek_api_base", "https://api.siliconflow.cn/v1"),
+                model_name=config.get("llm_model", "deepseek-ai/DeepSeek-R1"),
+                temperature=config.get("temperature", 0)
+            )
+        else:
+            raise ValueError(f"不支持的模型类型: {model_type}")
+            
         self.redis_client = redis.Redis(
             host=config.get("redis_host", "localhost"),
             port=config.get("redis_port", 6379),
@@ -85,11 +182,11 @@ class AccountProcessor:
             # 创建工具
             tools = self.create_tools(account_id)
             
-            # 创建智能体
-            agent = create_structured_chat_agent(self.llm, tools)
-            agent_executor = AgentExecutor.from_agent_and_tools(
-                agent=agent,
+            # 创建智能体 - 使用新的初始化方法
+            agent_executor = initialize_agent(
                 tools=tools,
+                llm=self.llm,
+                agent="structured_chat",
                 verbose=True
             )
             
@@ -123,4 +220,49 @@ class AccountProcessor:
                 "status": "error",
                 "error": str(e),
                 "timestamp": datetime.now().isoformat()
-            } 
+            }
+
+    def test_model(self):
+        """测试模型是否正常工作"""
+        try:
+            response = self.llm._generate([
+                SystemMessage(content="你是一个有帮助的AI助手。"),
+                HumanMessage(content="你好，请用一句话介绍自己。")
+            ])
+            return {
+                "success": True,
+                "response": response.content
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+# 加载环境变量
+load_dotenv()
+
+# 创建一个简单的模拟数据库管理器
+class MockDBManager:
+    def fetch_data(self, account_id, db_name, query):
+        return {"mock_data": "这是模拟数据"}
+
+# 配置
+config = {
+    "model_type": "siliconflow",  # 使用硅基流动平台
+    # 如果你已经设置了环境变量，这里可以不提供API密钥
+}
+
+# 初始化AccountProcessor
+processor = AccountProcessor(MockDBManager(), config)
+
+# 测试模型
+result = processor.test_model()
+
+# 输出结果
+if result["success"]:
+    print("✅ 模型测试成功！")
+    print(f"模型响应: {result['response']}")
+else:
+    print("❌ 模型测试失败!")
+    print(f"错误信息: {result['error']}") 
