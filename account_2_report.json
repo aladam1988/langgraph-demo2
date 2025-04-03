@@ -1,0 +1,14 @@
+{
+  "account_id": "2",
+  "analysis_date": "2025-04-03 09:17:23",
+  "basic_info": {
+    "total_records": 10,
+    "date_range": "2025-01-01 到 2025-04-01",
+    "total_usage": 45.0,
+    "average_usage": 4.5
+  },
+  "leakage_detection": {
+    "possible_leakage": [],
+    "has_leakage": false
+  }
+}
