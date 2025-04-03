@@ -448,30 +448,31 @@ class AccountProcessor:
                 "error": str(e)
             }
 
-# 加载环境变量
-load_dotenv()
-
-# 创建一个简单的模拟数据库管理器
-class MockDBManager:
-    def fetch_data(self, account_id, db_name, query):
-        return {"mock_data": "这是模拟数据"}
-
-# 配置
-config = {
-    "model_type": "siliconflow",  # 使用硅基流动平台
-    # 如果你已经设置了环境变量，这里可以不提供API密钥
-}
-
-# 初始化AccountProcessor
-processor = AccountProcessor(MockDBManager(), config)
-
-# 测试模型
-result = processor.test_model()
-
-# 输出结果
-if result["success"]:
-    print("✅ 模型测试成功！")
-    print(f"模型响应: {result['response']}")
-else:
-    print("❌ 模型测试失败!")
-    print(f"错误信息: {result['error']}") 
+if __name__ == "__main__":
+    # 加载环境变量
+    load_dotenv()
+    
+    # 创建一个简单的模拟数据库管理器
+    class MockDBManager:
+        def fetch_data(self, account_id, db_name, query):
+            return {"mock_data": "这是模拟数据"}
+    
+    # 配置
+    config = {
+        "model_type": "siliconflow",  # 使用硅基流动平台
+        # 如果你已经设置了环境变量，这里可以不提供API密钥
+    }
+    
+    # 初始化AccountProcessor
+    processor = AccountProcessor(MockDBManager(), config)
+    
+    # 测试模型
+    result = processor.test_model()
+    
+    # 输出结果
+    if result["success"]:
+        print("✅ 模型测试成功！")
+        print(f"模型响应: {result['response']}")
+    else:
+        print("❌ 模型测试失败!")
+        print(f"错误信息: {result['error']}") 
