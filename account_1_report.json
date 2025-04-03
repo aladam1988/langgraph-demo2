@@ -1,0 +1,22 @@
+{
+  "account_id": "1",
+  "analysis_date": "2025-04-03 09:21:48",
+  "basic_info": {
+    "total_records": 10,
+    "date_range": "2025-01-01 到 2025-04-01",
+    "total_usage": 23.0,
+    "average_usage": 2.3
+  },
+  "ai_analysis": {
+    "leakage_detected": false,
+    "leakage_probability": "低",
+    "evidence": "1. 无连续多天小量用水：非零用水仅出现在3月11日（5.0）、3月21日（6.0）和4月1日（12.0），间隔均为10天，不符合连续3天以上小量用水的特征；\n2. 无夜间用水数据支持；\n3. 4月1日的高用量（12.0）为单日突发值，未观察到持续异常模式。",
+    "leakage_periods": [],
+    "recommendations": [
+      "检查4月1日的高用水量是否由特殊活动（如浇灌、清洁）引起",
+      "建议补充每日用水数据以更准确检测潜在漏水",
+      "若持续出现单日高用量，可检查管道或设备是否存在间歇性泄漏"
+    ]
+  },
+  "model_used": "DeepSeek-R1"
+}
