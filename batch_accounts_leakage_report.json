@@ -1,0 +1,72 @@
+{
+  "1": {
+    "account_id": "1",
+    "analysis_date": "2025-04-03 09:27:01",
+    "leakage_detected": false,
+    "leakage_probability": "低",
+    "leakage_periods": []
+  },
+  "10": {
+    "account_id": "10",
+    "analysis_date": "2025-04-03 09:27:01",
+    "leakage_detected": false,
+    "leakage_probability": "低",
+    "leakage_periods": []
+  },
+  "2": {
+    "account_id": "2",
+    "analysis_date": "2025-04-03 09:27:01",
+    "leakage_detected": false,
+    "leakage_probability": "低",
+    "leakage_periods": []
+  },
+  "3": {
+    "account_id": "3",
+    "analysis_date": "2025-04-03 09:27:01",
+    "leakage_detected": false,
+    "leakage_probability": "低",
+    "leakage_periods": []
+  },
+  "4": {
+    "account_id": "4",
+    "analysis_date": "2025-04-03 09:27:01",
+    "leakage_detected": false,
+    "leakage_probability": "低",
+    "leakage_periods": []
+  },
+  "5": {
+    "account_id": "5",
+    "analysis_date": "2025-04-03 09:27:01",
+    "leakage_detected": false,
+    "leakage_probability": "低",
+    "leakage_periods": []
+  },
+  "6": {
+    "account_id": "6",
+    "analysis_date": "2025-04-03 09:27:01",
+    "leakage_detected": false,
+    "leakage_probability": "低",
+    "leakage_periods": []
+  },
+  "7": {
+    "account_id": "7",
+    "analysis_date": "2025-04-03 09:27:01",
+    "leakage_detected": false,
+    "leakage_probability": "低",
+    "leakage_periods": []
+  },
+  "8": {
+    "account_id": "8",
+    "analysis_date": "2025-04-03 09:27:01",
+    "leakage_detected": false,
+    "leakage_probability": "低",
+    "leakage_periods": []
+  },
+  "9": {
+    "account_id": "9",
+    "analysis_date": "2025-04-03 09:27:01",
+    "leakage_detected": false,
+    "leakage_probability": "低",
+    "leakage_periods": []
+  }
+}
