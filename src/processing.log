@@ -1,0 +1,21 @@
+2025-04-04 22:28:58.114 | INFO     | __main__:main:215 - 配置加载完成: {'db1_connection_string': 'postgresql://user:password@localhost:5432/db1', 'db2_connection_string': 'mysql://user:password@localhost:3306/db2', 'db1_mongo_uri': 'mongodb://localhost:27017', 'db2_mongo_uri': 'mongodb://localhost:27017', 'db1_database': 'db1', 'db2_database': 'db2', 'db1_collection': 'collection1', 'db2_collection': 'collection2', 'llm_model': 'deepseek-chat', 'max_workers': 50, 'batch_size': 5000, 'use_local_storage': True}
+2025-04-04 22:28:58.114 | INFO     | __main__:__init__:87 - 使用本地存储替代Redis
+2025-04-04 22:28:58.826 | INFO     | __main__:main:223 - 已处理的账户数量: 0
+2025-04-04 22:43:59.340 | INFO     | __main__:main:478 - 配置加载完成
+2025-04-04 22:43:59.340 | INFO     | __main__:main:482 - 数据库路径: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-04 22:43:59.340 | INFO     | __main__:__init__:114 - 已连接到数据库: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-04 22:43:59.341 | INFO     | __main__:main:487 - 已初始化数据分析器，连接到数据库: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-04 22:43:59.341 | INFO     | __main__:main:491 - 已准备数据用于大模型分析
+2025-04-04 22:43:59.341 | INFO     | __main__:__init__:371 - 已初始化DeepSeek模型: deepseek-chat
+2025-04-04 22:43:59.341 | INFO     | __main__:main:495 - 已初始化大模型分析器
+2025-04-04 22:43:59.342 | INFO     | __main__:main:498 - 开始使用大模型分析数据...
+2025-04-04 22:43:59.555 | ERROR    | __main__:generate:398 - 调用DeepSeek API时出错: 400 Client Error: Bad Request for url: https://api.siliconflow.cn/v1/chat/completions
+2025-04-04 22:43:59.555 | ERROR    | __main__:analyze_data:463 - 分析数据时出错: 400 Client Error: Bad Request for url: https://api.siliconflow.cn/v1/chat/completions
+2025-04-04 22:43:59.555 | ERROR    | __main__:main:521 - 大模型分析失败: 400 Client Error: Bad Request for url: https://api.siliconflow.cn/v1/chat/completions
+2025-04-04 22:43:59.556 | INFO     | __main__:main:526 - 开始分析账户 1...
+2025-04-04 22:43:59.557 | ERROR    | __main__:generate_transaction_chart:315 - 生成图表时出错: could not convert string to float: '2025-04-03 01:06:58'
+2025-04-04 22:43:59.710 | ERROR    | __main__:generate:398 - 调用DeepSeek API时出错: 400 Client Error: Bad Request for url: https://api.siliconflow.cn/v1/chat/completions
+2025-04-04 22:43:59.710 | ERROR    | __main__:analyze_data:463 - 分析数据时出错: 400 Client Error: Bad Request for url: https://api.siliconflow.cn/v1/chat/completions
+2025-04-04 22:43:59.710 | ERROR    | __main__:main:580 - 账户 1 分析失败: 400 Client Error: Bad Request for url: https://api.siliconflow.cn/v1/chat/completions
+2025-04-04 22:43:59.711 | INFO     | __main__:close:120 - 数据库连接已关闭
+2025-04-04 22:43:59.711 | INFO     | __main__:main:593 - 分析完成
