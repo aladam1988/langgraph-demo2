@@ -906,3 +906,250 @@ AttributeError: 'DeepSeekR1' object has no attribute 'config'
 2025-04-05 00:15:41.916 | INFO     | __main__:main:513 - 分析报告已保存到: /Users/aladam/Desktop/langgraph-demo/database_analysis_report.md
 2025-04-05 00:15:41.916 | INFO     | __main__:close:198 - 数据库连接已关闭
 2025-04-05 00:15:41.916 | INFO     | __main__:main:534 - 分析完成
+2025-04-06 09:17:12.182 | INFO     | __main__:main:480 - 开始分析数据库...
+2025-04-06 09:17:12.182 | INFO     | __main__:main:484 - 数据库路径: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:17:12.185 | INFO     | __main__:connect_db:191 - 成功连接到数据库: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:17:12.188 | ERROR    | __main__:get_water_usage_data:242 - 获取用水量数据失败: no such table: water_usage
+2025-04-06 09:17:12.189 | INFO     | __main__:__init__:56 - 初始化DeepSeek-R1模型，API基础URL: https://api.siliconflow.cn/v1，模型: deepseek-ai/DeepSeek-R1
+2025-04-06 09:17:12.189 | INFO     | __main__:__init__:270 - 初始化大模型分析器完成
+2025-04-06 09:17:12.189 | INFO     | __main__:main:497 - 开始分析整个数据库...
+2025-04-06 09:17:12.189 | INFO     | __main__:analyze_data:288 - 调用大模型API...
+2025-04-06 09:17:12.190 | DEBUG    | __main__:generate:74 - API请求体: {'model': 'deepseek-ai/DeepSeek-R1', 'messages': [{'role': 'system', 'content': '你是一个专业的数据分析师，擅长分析数据库结构和内容，提供深入的见解。'}, {'role': 'user', 'content': '\n        请简要分析以下用水量数据，提供关键见解。请控制回复在300字以内。\n        \n        数据库名称: account_data.db\n        分析目标: 用水量数据分析\n        \n        用水量数据样本（每条记录代表一天的用水量）:\n        \n        请提供简要分析:\n        1. 用水量趋势是否正常\n        2. 根据连续几天的用水量数据，判断是否存在漏水迹象\n        \n        判断标准：\n        - 居民用水：正常情况下5天内用水量约1方以下；如果用量持续增加并超过3方可能是管道漏水；如果突然超过5方或连续每天都有0.5-1方用水可能是器具漏水\n        - 商业用水：正常情况下10天用水量约10-50方；如果当前用量较之前增大一倍可能存在漏水\n        \n        请保持简洁，控制回复在300字以内。\n        '}], 'temperature': 0.3, 'max_tokens': 800}
+2025-04-06 09:17:12.190 | INFO     | __main__:generate:76 - 发送请求到DeepSeek API...
+2025-04-06 09:17:47.122 | DEBUG    | __main__:generate:87 - API响应状态码: 200
+2025-04-06 09:17:47.122 | DEBUG    | __main__:generate:88 - API响应内容: {"id":"019608ac4f8620b46bad306e9270ea94","object":"chat.completion","created":1743902232,"model":"deepseek-ai/DeepSeek-R1","choices":[{"index":0,"message":{"role":"assistant","content":"**用水量分析简报**  \n1. **趋势判断**：  \n- 居民用户：若连续5天用水量\u003e1方（尤其持续增至3方以上）或单日\u003e5方，需警惕管道/器具漏水  \n- 商业用户：当前用量较历史均值突增100%时存在漏水风险  \n\n2. **漏水迹象识别**：  \n- **管道漏水特征**：居民用水连续3天阶梯式增长（如1.2→2.8→4.5方）  \n- **器具漏水特征**：居民持续0.5-1方/日（如马桶渗漏），或商业用户日用水量突破100方（原基线50方）  \n- **突发泄漏信号**：居民单日\u003e5方或商业单日用量断层式翻倍  \n\n**建议行动项**：  \n①标记连续3天...
+2025-04-06 09:17:47.122 | INFO     | __main__:generate:93 - 成功使用模型 deepseek-ai/DeepSeek-R1
+2025-04-06 09:17:47.122 | INFO     | __main__:main:501 - 数据库分析成功
+2025-04-06 09:17:47.123 | INFO     | __main__:main:507 - 分析报告已保存到: /Users/aladam/Desktop/langgraph-demo/database_analysis_report.md
+2025-04-06 09:17:47.123 | INFO     | __main__:close_db:200 - 数据库连接已关闭
+2025-04-06 09:17:47.123 | INFO     | __main__:main:528 - 分析完成
+2025-04-06 09:22:41.177 | INFO     | __main__:main:480 - 开始分析数据库...
+2025-04-06 09:22:41.177 | INFO     | __main__:main:484 - 数据库路径: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:22:41.179 | INFO     | __main__:connect_db:191 - 成功连接到数据库: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:22:41.182 | ERROR    | __main__:get_water_usage_data:242 - 获取用水量数据失败: no such table: water_usage
+2025-04-06 09:22:41.182 | INFO     | __main__:__init__:56 - 初始化DeepSeek-R1模型，API基础URL: https://api.siliconflow.cn/v1，模型: deepseek-ai/DeepSeek-R1
+2025-04-06 09:22:41.182 | INFO     | __main__:__init__:270 - 初始化大模型分析器完成
+2025-04-06 09:22:41.182 | INFO     | __main__:main:497 - 开始分析整个数据库...
+2025-04-06 09:22:41.182 | INFO     | __main__:analyze_data:288 - 调用大模型API...
+2025-04-06 09:22:41.182 | DEBUG    | __main__:generate:74 - API请求体: {'model': 'deepseek-ai/DeepSeek-R1', 'messages': [{'role': 'system', 'content': '你是一个专业的数据分析师，擅长分析数据库结构和内容，提供深入的见解。'}, {'role': 'user', 'content': '\n        请简要分析以下用水量数据，提供关键见解。请控制回复在300字以内。\n        \n        数据库名称: account_data.db\n        分析目标: 用水量数据分析\n        \n        用水量数据样本（每条记录代表一天的用水量）:\n        \n        请提供简要分析:\n        1. 用水量趋势是否正常\n        2. 根据连续几天的用水量数据，判断是否存在漏水迹象\n        \n        判断标准：\n        - 居民用水：正常情况下5天内用水量约1方以下；如果用量持续增加并超过3方可能是管道漏水；如果突然超过5方或连续每天都有0.5-1方用水可能是器具漏水\n        - 商业用水：正常情况下10天用水量约10-50方；如果当前用量较之前增大一倍可能存在漏水\n        \n        请保持简洁，控制回复在300字以内。\n        '}], 'temperature': 0.3, 'max_tokens': 800}
+2025-04-06 09:22:41.183 | INFO     | __main__:generate:76 - 发送请求到DeepSeek API...
+2025-04-06 09:23:05.498 | DEBUG    | __main__:generate:87 - API响应状态码: 200
+2025-04-06 09:23:05.498 | DEBUG    | __main__:generate:88 - API响应内容: {"id":"019608b154a7f0e8fd3cf2f835894cb9","object":"chat.completion","created":1743902561,"model":"deepseek-ai/DeepSeek-R1","choices":[{"index":0,"message":{"role":"assistant","content":"**用水量分析报告**\n\n1. **趋势判断**  \n居民用户若出现连续5日用水量\u003e0.5方/日（尤其含\u003e1方记录）需警惕，商业用户单日突破50方或周均量翻倍则异常。需结合历史基线比对短期波动是否超行业标准（居民日波动±30%，商业±50%为警戒线）。\n\n2. **漏水特征识别**  \n- **管道漏水**：居民连续3日\u003e1.5方且逐日递增（如1.8→2.3→3.1方），或商业连续5日超历史均值150%  \n- **器具漏水**：居民单日\u003e5方（如马桶长流水）或持续5日0.5-1方（如滴漏），商业夜间非营业时段持续用水量\u003e日间20%  \n\n**建议**：...
+2025-04-06 09:23:05.498 | INFO     | __main__:generate:93 - 成功使用模型 deepseek-ai/DeepSeek-R1
+2025-04-06 09:23:05.499 | INFO     | __main__:main:501 - 数据库分析成功
+2025-04-06 09:23:05.499 | INFO     | __main__:main:507 - 分析报告已保存到: /Users/aladam/Desktop/langgraph-demo/database_analysis_report.md
+2025-04-06 09:23:05.500 | INFO     | __main__:close_db:200 - 数据库连接已关闭
+2025-04-06 09:23:05.500 | INFO     | __main__:main:528 - 分析完成
+2025-04-06 09:25:46.208 | INFO     | __main__:main:480 - 开始分析数据库...
+2025-04-06 09:25:46.209 | INFO     | __main__:main:484 - 数据库路径: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:25:46.210 | INFO     | __main__:connect_db:191 - 成功连接到数据库: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:25:46.214 | ERROR    | __main__:get_water_usage_data:242 - 获取用水量数据失败: no such table: water_usage
+2025-04-06 09:25:46.214 | ERROR    | __main__:main:494 - 数据准备失败: 数据获取失败: no such table: water_usage
+2025-04-06 09:25:46.214 | INFO     | __main__:close_db:200 - 数据库连接已关闭
+2025-04-06 09:26:20.871 | INFO     | __main__:main:480 - 开始分析数据库...
+2025-04-06 09:26:20.872 | INFO     | __main__:main:484 - 数据库路径: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:26:20.872 | INFO     | __main__:connect_db:191 - 成功连接到数据库: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:26:20.872 | ERROR    | __main__:get_water_usage_data:242 - 获取用水量数据失败: no such table: water_usage
+2025-04-06 09:26:20.872 | ERROR    | __main__:main:494 - 数据准备失败: 数据获取失败: no such table: water_usage
+2025-04-06 09:26:20.873 | INFO     | __main__:close_db:200 - 数据库连接已关闭
+2025-04-06 09:29:27.087 | INFO     | __main__:main:480 - 开始分析数据库...
+2025-04-06 09:29:27.087 | INFO     | __main__:main:484 - 数据库路径: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:29:27.090 | INFO     | __main__:connect_db:191 - 成功连接到数据库: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:29:27.094 | ERROR    | __main__:get_transaction_data:242 - 获取交易数据失败: no such column: transaction_date
+2025-04-06 09:29:27.094 | ERROR    | __main__:main:494 - 数据准备失败: 数据获取失败: no such column: transaction_date
+2025-04-06 09:29:27.094 | INFO     | __main__:close_db:200 - 数据库连接已关闭
+2025-04-06 09:30:08.931 | INFO     | __main__:main:487 - 开始分析数据库...
+2025-04-06 09:30:08.931 | INFO     | __main__:main:491 - 数据库路径: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:30:08.931 | INFO     | __main__:connect_db:191 - 成功连接到数据库: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:30:08.932 | INFO     | __main__:get_transaction_data:211 - transactions表结构:
+2025-04-06 09:30:08.933 | INFO     | __main__:get_transaction_data:213 - 列名: id, 类型: TEXT
+2025-04-06 09:30:08.933 | INFO     | __main__:get_transaction_data:213 - 列名: account_id, 类型: TEXT
+2025-04-06 09:30:08.933 | INFO     | __main__:get_transaction_data:213 - 列名: amount, 类型: REAL
+2025-04-06 09:30:08.933 | INFO     | __main__:get_transaction_data:213 - 列名: type, 类型: TEXT
+2025-04-06 09:30:08.933 | INFO     | __main__:get_transaction_data:213 - 列名: timestamp, 类型: TIMESTAMP
+2025-04-06 09:30:08.933 | INFO     | __main__:get_transaction_data:213 - 列名: description, 类型: TEXT
+2025-04-06 09:30:08.933 | INFO     | __main__:get_transaction_data:213 - 列名: metadata, 类型: TEXT
+2025-04-06 09:30:08.933 | ERROR    | __main__:get_transaction_data:249 - 获取交易数据失败: no such column: transaction_date
+2025-04-06 09:30:08.934 | ERROR    | __main__:main:501 - 数据准备失败: 数据获取失败: no such column: transaction_date
+2025-04-06 09:30:08.934 | INFO     | __main__:close_db:200 - 数据库连接已关闭
+2025-04-06 09:30:33.097 | INFO     | __main__:main:487 - 开始分析数据库...
+2025-04-06 09:30:33.097 | INFO     | __main__:main:491 - 数据库路径: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:30:33.098 | INFO     | __main__:connect_db:191 - 成功连接到数据库: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:30:33.098 | INFO     | __main__:get_transaction_data:211 - transactions表结构:
+2025-04-06 09:30:33.099 | INFO     | __main__:get_transaction_data:213 - 列名: id, 类型: TEXT
+2025-04-06 09:30:33.099 | INFO     | __main__:get_transaction_data:213 - 列名: account_id, 类型: TEXT
+2025-04-06 09:30:33.099 | INFO     | __main__:get_transaction_data:213 - 列名: amount, 类型: REAL
+2025-04-06 09:30:33.099 | INFO     | __main__:get_transaction_data:213 - 列名: type, 类型: TEXT
+2025-04-06 09:30:33.099 | INFO     | __main__:get_transaction_data:213 - 列名: timestamp, 类型: TIMESTAMP
+2025-04-06 09:30:33.099 | INFO     | __main__:get_transaction_data:213 - 列名: description, 类型: TEXT
+2025-04-06 09:30:33.100 | INFO     | __main__:get_transaction_data:213 - 列名: metadata, 类型: TEXT
+2025-04-06 09:30:33.101 | INFO     | __main__:get_transaction_data:245 - 成功获取1个账户的交易数据
+2025-04-06 09:30:33.102 | INFO     | __main__:__init__:56 - 初始化DeepSeek-R1模型，API基础URL: https://api.siliconflow.cn/v1，模型: deepseek-ai/DeepSeek-R1
+2025-04-06 09:30:33.103 | INFO     | __main__:__init__:277 - 初始化大模型分析器完成
+2025-04-06 09:30:33.103 | INFO     | __main__:main:508 - 开始分析整个数据库...
+2025-04-06 09:30:33.103 | INFO     | __main__:analyze_data:295 - 调用大模型API...
+2025-04-06 09:30:33.108 | DEBUG    | __main__:generate:74 - API请求体: {'model': 'deepseek-ai/DeepSeek-R1', 'messages': [{'role': 'system', 'content': '你是一个专业的数据分析师，擅长分析数据库结构和内容，提供深入的见解。'}, {'role': 'user', 'content': '\n        请简要分析以下交易数据，提供关键见解。请控制回复在300字以内。\n        \n        数据库名称: account_data.db\n        分析目标: 交易数据分析\n        \n        交易数据样本（每条记录代表一天的交易量）:\n        \n账户ID: 1\n日期和交易量数据:\n- 2025-04-03 01:06:58: 1.0方\n- 2025-04-03 01:06:58: 1.0方\n- 2025-04-03 01:06:58: 1.0方\n- 2025-04-03 01:06:58: 1.0方\n- 2025-04-03 01:06:58: 1.0方\n\n        请提供简要分析:\n        1. 交易量趋势是否正常\n        2. 根据连续几天的交易量数据，判断是否存在漏水迹象\n        \n        判断标准：\n        - 居民交易：正常情况下5天内交易量约1方以下；如果用量持续增加并超过3方可能是管道漏水；如果突然超过5方或连续每天都有0.5-1方交易可能是器具漏水\n        - 商业交易：正常情况下10天交易量约10-50方；如果当前用量较之前增大一倍可能存在漏水\n        \n        请保持简洁，控制回复在300字以内。\n        '}], 'temperature': 0.3, 'max_tokens': 800}
+2025-04-06 09:30:33.109 | INFO     | __main__:generate:76 - 发送请求到DeepSeek API...
+2025-04-06 09:31:36.418 | DEBUG    | __main__:generate:87 - API响应状态码: 200
+2025-04-06 09:31:36.418 | DEBUG    | __main__:generate:88 - API响应内容: {"id":"019608b88884bc179a9453ea43a8fbfa","object":"chat.completion","created":1743903033,"model":"deepseek-ai/DeepSeek-R1","choices":[{"index":0,"message":{"role":"assistant","content":"**交易数据分析简报**  \n1. **交易量异常性**：样本显示账户ID:1在2025-04-03单日内出现5次1.0方交易（总量5方），所有记录时间戳完全相同（01:06:58），存在数据重复或采集异常可能。  \n\n2. **漏水风险判断**（按居民标准）：  \n   - **单日超量**：若数据真实，单日5方远超居民正常阈值（5天≤1方），符合“突然超5方”的漏水特征。  \n   - **连续性存疑**：无连续多日数据支撑趋势分析，需核查时间戳准确性及后续数据。  \n\n**结论**：当前数据存在显著异常（时间戳重复+单日超量），建议优先验证数据源可靠性。若数据无误，需紧急排查管道/器具漏水风险，并补充...
+2025-04-06 09:31:36.418 | INFO     | __main__:generate:93 - 成功使用模型 deepseek-ai/DeepSeek-R1
+2025-04-06 09:31:36.419 | INFO     | __main__:main:512 - 数据库分析成功
+2025-04-06 09:31:36.419 | INFO     | __main__:main:518 - 分析报告已保存到: /Users/aladam/Desktop/langgraph-demo/database_analysis_report.md
+2025-04-06 09:31:36.420 | INFO     | __main__:close_db:200 - 数据库连接已关闭
+2025-04-06 09:31:36.420 | INFO     | __main__:main:539 - 分析完成
+2025-04-06 09:35:26.957 | INFO     | __main__:main:529 - 开始分析数据库...
+2025-04-06 09:35:26.957 | INFO     | __main__:main:533 - 数据库路径: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:35:26.959 | INFO     | __main__:connect_db:213 - 成功连接到数据库: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:35:26.962 | INFO     | __main__:get_transaction_data:233 - transactions表结构:
+2025-04-06 09:35:26.962 | INFO     | __main__:get_transaction_data:235 - 列名: id, 类型: TEXT
+2025-04-06 09:35:26.962 | INFO     | __main__:get_transaction_data:235 - 列名: account_id, 类型: TEXT
+2025-04-06 09:35:26.962 | INFO     | __main__:get_transaction_data:235 - 列名: amount, 类型: REAL
+2025-04-06 09:35:26.963 | INFO     | __main__:get_transaction_data:235 - 列名: type, 类型: TEXT
+2025-04-06 09:35:26.963 | INFO     | __main__:get_transaction_data:235 - 列名: timestamp, 类型: TIMESTAMP
+2025-04-06 09:35:26.963 | INFO     | __main__:get_transaction_data:235 - 列名: description, 类型: TEXT
+2025-04-06 09:35:26.963 | INFO     | __main__:get_transaction_data:235 - 列名: metadata, 类型: TEXT
+2025-04-06 09:35:26.963 | INFO     | __main__:get_transaction_data:267 - 成功获取1个账户的交易数据
+2025-04-06 09:35:26.964 | INFO     | __main__:__init__:58 - 初始化DeepSeek-R1模型，API基础URL: https://api.siliconflow.cn/v1，模型: deepseek-ai/DeepSeek-R1
+2025-04-06 09:35:26.964 | INFO     | __main__:__init__:299 - 初始化大模型分析器完成
+2025-04-06 09:35:26.964 | INFO     | __main__:main:550 - 开始分析整个数据库...
+2025-04-06 09:35:26.965 | INFO     | __main__:analyze_data:317 - 调用大模型API...
+2025-04-06 09:35:26.965 | DEBUG    | __main__:generate:76 - API请求体: {'model': 'deepseek-ai/DeepSeek-R1', 'messages': [{'role': 'system', 'content': '你是一个专业的数据分析师，擅长分析数据库结构和内容，提供深入的见解。'}, {'role': 'user', 'content': '\n        请对以下交易数据进行详细分析，并提供分析报告。\n\n        数据库名称: account_data.db\n        分析目标: 交易数据分析\n        \n        === 原始交易数据 ===\n        \n账户ID: 1\n交易记录:\n- 2025-04-03 01:06:58: 1.0元\n- 2025-04-03 01:06:58: 1.0元\n- 2025-04-03 01:06:58: 1.0元\n- 2025-04-03 01:06:58: 1.0元\n- 2025-04-03 01:06:58: 1.0元\n- 2025-04-03 01:06:58: 1.0元\n- 2025-04-03 01:06:58: 1.0元\n- 2025-04-03 01:06:58: 6.0元\n- 2025-04-03 01:06:58: 12.0元\n- 2025-04-03 01:06:58: 24.0元\n账户统计: 平均交易额: 4.90元, 最大交易额: 24.00元, 最小交易额: 1.00元\n\n        === 分析要求 ===\n        请提供以下方面的分析：\n\n        1. 数据概览\n        - 分析的账户数量和总交易记录数\n        - 交易金额的分布范围\n\n        2. 交易模式分析\n        - 各账户的交易频率和金额特征\n        - 是否存在异常大额或小额交易\n        - 交易时间的分布特征\n\n        3. 风险识别\n        - 标出任何可能的异常交易模式\n        - 对于异常交易，给出具体的数据支持\n\n        4. 建议\n        - 基于分析结果提供具体的建议\n        \n        请确保分析报告：\n        1. 包含具体的数据支持\n        2. 清晰列出关键发现\n        3. 控制在500字以内\n        4. 使用markdown格式\n        '}], 'temperature': 0.3, 'max_tokens': 800}
+2025-04-06 09:35:26.965 | INFO     | __main__:generate:78 - 发送请求到DeepSeek API...
+2025-04-06 09:36:38.052 | DEBUG    | __main__:generate:107 - API响应状态码: 200
+2025-04-06 09:36:38.052 | DEBUG    | __main__:generate:108 - API响应内容: {"id":"019608bd0496c54ac2be84a609a7b98b","object":"chat.completion","created":1743903327,"model":"deepseek-ai/DeepSeek-R1","choices":[{"index":0,"message":{"role":"assistant","content":"```markdown\n# 账户交易数据分析报告\n\n## 1. 数据概览\n- **账户数量**: 1个（仅账户ID:1）\n- **总交易记录数**: 10笔\n- **金额分布**: \n  - 最小值1.0元（7笔）\n  - 中位数1.0元\n  - 最大值24.0元\n  - 75%交易≤6.0元\n\n## 2. 交易模式分析\n### 核心特征\n- **高频集中交易**: 所有10笔交易均发生在`2025-04-03 01:06:58`同一秒\n- **金额阶梯增长**: 呈现1元→6元→12元→24元的指数级增长模式（倍数：6x→2x→2x）\n- **金额离散度**: 标准差达7.07元，离散系...
+2025-04-06 09:36:38.052 | INFO     | __main__:generate:113 - 成功使用模型 deepseek-ai/DeepSeek-R1
+2025-04-06 09:36:38.053 | INFO     | __main__:main:554 - 数据库分析成功
+2025-04-06 09:36:38.053 | INFO     | __main__:main:560 - 分析报告已保存到: /Users/aladam/Desktop/langgraph-demo/database_analysis_report.md
+2025-04-06 09:36:38.054 | INFO     | __main__:close_db:222 - 数据库连接已关闭
+2025-04-06 09:36:38.054 | INFO     | __main__:main:581 - 分析完成
+2025-04-06 09:39:51.871 | INFO     | __main__:main:543 - 开始分析数据库...
+2025-04-06 09:39:51.872 | INFO     | __main__:main:547 - 数据库路径: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:39:51.872 | INFO     | __main__:connect_db:213 - 成功连接到数据库: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:39:51.872 | INFO     | __main__:get_transaction_data:233 - transactions表结构:
+2025-04-06 09:39:51.873 | INFO     | __main__:get_transaction_data:235 - 列名: id, 类型: TEXT
+2025-04-06 09:39:51.873 | INFO     | __main__:get_transaction_data:235 - 列名: account_id, 类型: TEXT
+2025-04-06 09:39:51.873 | INFO     | __main__:get_transaction_data:235 - 列名: amount, 类型: REAL
+2025-04-06 09:39:51.873 | INFO     | __main__:get_transaction_data:235 - 列名: type, 类型: TEXT
+2025-04-06 09:39:51.873 | INFO     | __main__:get_transaction_data:235 - 列名: timestamp, 类型: TIMESTAMP
+2025-04-06 09:39:51.873 | INFO     | __main__:get_transaction_data:235 - 列名: description, 类型: TEXT
+2025-04-06 09:39:51.873 | INFO     | __main__:get_transaction_data:235 - 列名: metadata, 类型: TEXT
+2025-04-06 09:39:51.874 | INFO     | __main__:get_transaction_data:275 - 成功获取1个账户的交易数据
+2025-04-06 09:39:51.874 | INFO     | __main__:__init__:58 - 初始化DeepSeek-R1模型，API基础URL: https://api.siliconflow.cn/v1，模型: deepseek-ai/DeepSeek-R1
+2025-04-06 09:39:51.874 | INFO     | __main__:__init__:307 - 初始化大模型分析器完成
+2025-04-06 09:39:51.874 | INFO     | __main__:main:564 - 开始分析整个数据库...
+2025-04-06 09:39:51.875 | INFO     | __main__:analyze_data:325 - 调用大模型API...
+2025-04-06 09:39:51.875 | DEBUG    | __main__:generate:76 - API请求体: {'model': 'deepseek-ai/DeepSeek-R1', 'messages': [{'role': 'system', 'content': '你是一个专业的数据分析师，擅长分析数据库结构和内容，提供深入的见解。'}, {'role': 'user', 'content': '\n        请对以下用水数据进行详细分析，重点关注可能存在的漏水情况。\n\n        数据库名称: account_data.db\n        分析目标: 用水量异常分析\n        \n        === 原始用水数据 ===\n        \n用户ID: 1\n用水记录:\n- 2025-01-01: 1.0方\n- 2025-01-11: 1.0方\n- 2025-01-21: 1.0方\n- 2025-02-01: 1.0方\n- 2025-02-11: 1.0方\n- 2025-02-21: 1.0方\n- 2025-03-01: 1.0方\n- 2025-03-11: 6.0方\n- 2025-03-21: 12.0方\n- 2025-04-01: 24.0方\n用水统计: 平均用水量: 4.90方, 最大用水量: 24.00方, 最小用水量: 1.00方\n\n        === 分析要求 ===\n        请提供以下方面的分析：\n\n        1. 数据概览\n        - 分析的用户数量和总用水记录数\n        - 用水量的分布范围\n\n        2. 用水模式分析\n        - 各用户的用水频率和用量特征\n        - 是否存在异常大额或小额用水\n        - 用水时间的分布特征\n\n        3. 漏水风险识别\n        - 标出任何可能的漏水情况\n        - 对于疑似漏水，给出具体的数据支持\n        \n        漏水判断标准：\n        - 居民用水：正常情况下日均用水量约1方以下；如果用量持续增加并超过3方可能是管道漏水；\n          如果突然超过5方或连续每天都有0.5-1方用水可能是器具漏水\n        - 商业用水：正常情况下日均用水量约10-50方；如果当前用量较之前增大一倍可能存在漏水\n\n        4. 建议\n        - 对于发现的问题提供具体的处理建议\n        - 如果发现漏水，建议采取的措施\n        \n        请确保分析报告：\n        1. 包含具体的数据支持\n        2. 清晰列出关键发现\n        3. 控制在500字以内\n        4. 使用markdown格式\n        '}], 'temperature': 0.3, 'max_tokens': 800}
+2025-04-06 09:39:51.875 | INFO     | __main__:generate:78 - 发送请求到DeepSeek API...
+2025-04-06 09:40:47.476 | DEBUG    | __main__:generate:107 - API响应状态码: 200
+2025-04-06 09:40:47.476 | DEBUG    | __main__:generate:108 - API响应内容: {"id":"019608c10eebc57cab70ac3f8646d860","object":"chat.completion","created":1743903592,"model":"deepseek-ai/DeepSeek-R1","choices":[{"index":0,"message":{"role":"assistant","content":"","reasoning_content":"嗯，用户让我分析用水数据，重点找漏水情况。首先，我需要仔细看一下提供的数据。数据库是account_data.db，但用户只给了一个用户ID为1的记录，可能数据量不大？不过用户可能只提供了示例数据，实际可能有更多用户，但这里只有用户1的数据。分析目标是用水量异常，特别是漏水。\n\n首先，按照分析要求，我需要分四个部分：数据概览、用水模式分析、漏水风险识别和建议。数据概览部分需要用户数量和总记录数。但给出的数据里只有用户1，所以可能用户数量是1，记录数是10条？不过要看原始数据里的用水记录，用户1有从1月到4月的10条记录，每次间隔10天左右，但3月到4月用量突然增加。\n\...
+2025-04-06 09:40:47.476 | INFO     | __main__:generate:113 - 成功使用模型 deepseek-ai/DeepSeek-R1
+2025-04-06 09:40:47.476 | INFO     | __main__:generate:120 - 使用reasoning_content字段作为回复内容
+2025-04-06 09:40:47.477 | INFO     | __main__:main:568 - 数据库分析成功
+2025-04-06 09:40:47.477 | INFO     | __main__:main:574 - 分析报告已保存到: /Users/aladam/Desktop/langgraph-demo/database_analysis_report.md
+2025-04-06 09:40:47.478 | INFO     | __main__:close_db:222 - 数据库连接已关闭
+2025-04-06 09:40:47.478 | INFO     | __main__:main:595 - 分析完成
+2025-04-06 09:45:25.185 | INFO     | __main__:main:545 - 开始分析数据库...
+2025-04-06 09:45:25.186 | INFO     | __main__:main:549 - 数据库路径: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:45:25.186 | INFO     | __main__:connect_db:213 - 成功连接到数据库: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:45:25.187 | INFO     | __main__:get_transaction_data:233 - transactions表结构:
+2025-04-06 09:45:25.187 | INFO     | __main__:get_transaction_data:235 - 列名: id, 类型: TEXT
+2025-04-06 09:45:25.187 | INFO     | __main__:get_transaction_data:235 - 列名: account_id, 类型: TEXT
+2025-04-06 09:45:25.187 | INFO     | __main__:get_transaction_data:235 - 列名: amount, 类型: REAL
+2025-04-06 09:45:25.187 | INFO     | __main__:get_transaction_data:235 - 列名: type, 类型: TEXT
+2025-04-06 09:45:25.187 | INFO     | __main__:get_transaction_data:235 - 列名: timestamp, 类型: TIMESTAMP
+2025-04-06 09:45:25.188 | INFO     | __main__:get_transaction_data:235 - 列名: description, 类型: TEXT
+2025-04-06 09:45:25.188 | INFO     | __main__:get_transaction_data:235 - 列名: metadata, 类型: TEXT
+2025-04-06 09:45:25.188 | INFO     | __main__:get_transaction_data:275 - 成功获取1个账户的交易数据
+2025-04-06 09:45:25.188 | INFO     | __main__:__init__:58 - 初始化DeepSeek-R1模型，API基础URL: https://api.siliconflow.cn/v1，模型: deepseek-ai/DeepSeek-R1
+2025-04-06 09:45:25.189 | INFO     | __main__:__init__:307 - 初始化大模型分析器完成
+2025-04-06 09:45:25.189 | INFO     | __main__:main:566 - 开始分析整个数据库...
+2025-04-06 09:45:25.189 | ERROR    | __main__:analyze_data:344 - 分析过程中出错: cannot access local variable 'account_id' where it is not associated with a value
+2025-04-06 09:45:25.190 | ERROR    | __main__:analyze_data:345 - Traceback (most recent call last):
+  File "/Users/aladam/Desktop/langgraph-demo/src/main.py", line 316, in analyze_data
+    prompt = self._create_prompt(data)
+  File "/Users/aladam/Desktop/langgraph-demo/src/main.py", line 364, in _create_prompt
+    用户ID: {account_id}为某个用户
+             ^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'account_id' where it is not associated with a value
+
+2025-04-06 09:45:25.190 | ERROR    | __main__:main:578 - 数据库分析失败: cannot access local variable 'account_id' where it is not associated with a value
+2025-04-06 09:45:25.191 | INFO     | __main__:main:585 - 模拟分析报告已保存到: /Users/aladam/Desktop/langgraph-demo/database_analysis_report_mock.md
+2025-04-06 09:45:25.191 | INFO     | __main__:close_db:222 - 数据库连接已关闭
+2025-04-06 09:45:25.192 | INFO     | __main__:main:597 - 分析完成
+2025-04-06 09:46:19.043 | INFO     | __main__:main:547 - 开始分析数据库...
+2025-04-06 09:46:19.043 | INFO     | __main__:main:551 - 数据库路径: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:46:19.044 | INFO     | __main__:connect_db:213 - 成功连接到数据库: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:46:19.044 | INFO     | __main__:get_transaction_data:233 - transactions表结构:
+2025-04-06 09:46:19.044 | INFO     | __main__:get_transaction_data:235 - 列名: id, 类型: TEXT
+2025-04-06 09:46:19.044 | INFO     | __main__:get_transaction_data:235 - 列名: account_id, 类型: TEXT
+2025-04-06 09:46:19.045 | INFO     | __main__:get_transaction_data:235 - 列名: amount, 类型: REAL
+2025-04-06 09:46:19.045 | INFO     | __main__:get_transaction_data:235 - 列名: type, 类型: TEXT
+2025-04-06 09:46:19.045 | INFO     | __main__:get_transaction_data:235 - 列名: timestamp, 类型: TIMESTAMP
+2025-04-06 09:46:19.045 | INFO     | __main__:get_transaction_data:235 - 列名: description, 类型: TEXT
+2025-04-06 09:46:19.045 | INFO     | __main__:get_transaction_data:235 - 列名: metadata, 类型: TEXT
+2025-04-06 09:46:19.046 | INFO     | __main__:get_transaction_data:275 - 成功获取1个账户的交易数据
+2025-04-06 09:46:19.047 | INFO     | __main__:__init__:58 - 初始化DeepSeek-R1模型，API基础URL: https://api.siliconflow.cn/v1，模型: deepseek-ai/DeepSeek-R1
+2025-04-06 09:46:19.047 | INFO     | __main__:__init__:307 - 初始化大模型分析器完成
+2025-04-06 09:46:19.047 | INFO     | __main__:main:568 - 开始分析整个数据库...
+2025-04-06 09:46:19.047 | INFO     | __main__:analyze_data:325 - 调用大模型API...
+2025-04-06 09:46:19.048 | DEBUG    | __main__:generate:76 - API请求体: {'model': 'deepseek-ai/DeepSeek-R1', 'messages': [{'role': 'system', 'content': '你是一个专业的水量异常数据分析师，擅长分析数据库中用水量异常的情况，提供深入的见解。'}, {'role': 'user', 'content': '\n        请对以下用水数据进行分析，重点关注可能存在的漏水情况。\n\n        数据库名称: account_data.db\n        分析目标: 用水量异常分析\n        \n        === 数据说明 ===\n        - metadata中的date字段为抄表日期\n        - amount字段为用水量（单位：方）\n        \n        === 原始用水数据 ===\n        \n用户ID: 1\n用水记录:\n- 抄表日期: 2025-01-01, 用水量: 1.0方\n- 抄表日期: 2025-01-11, 用水量: 1.0方\n- 抄表日期: 2025-01-21, 用水量: 1.0方\n- 抄表日期: 2025-02-01, 用水量: 1.0方\n- 抄表日期: 2025-02-11, 用水量: 1.0方\n- 抄表日期: 2025-02-21, 用水量: 1.0方\n- 抄表日期: 2025-03-01, 用水量: 1.0方\n- 抄表日期: 2025-03-11, 用水量: 6.0方\n- 抄表日期: 2025-03-21, 用水量: 12.0方\n- 抄表日期: 2025-04-01, 用水量: 24.0方\n用水统计: 平均用水量: 4.90方, 最大用水量: 24.00方, 最小用水量: 1.00方\n\n        === 分析要求 ===\n        请提供以下方面的分析：\n\n        1. 数据概览\n        - 分析的用户数量和总用水记录数\n        - 用水量的分布范围\n\n        2. 用水模式分析\n        - 各用户的用水频率和用量特征\n        - 是否存在异常大额或小额用水\n        - 用水时间的分布特征\n\n        3. 漏水风险识别\n        - 标出任何可能的漏水情况\n        - 对于疑似漏水，给出具体的数据支持\n        \n        漏水判断标准：\n        - 居民用水：正常情况下日均用水量约1方以下；如果用量持续增加并超过3方可能是管道漏水；\n          如果突然超过5方或连续每天都有0.5-1方用水可能是器具漏水\n        - 商业用水：正常情况下日均用水量约10-50方；如果当前用量较之前增大一倍可能存在漏水\n\n        4. 建议\n        - 对于发现的问题提供具体的处理建议\n        - 如果发现漏水，建议采取的措施\n        \n        请确保分析报告：\n        1. 包含具体的数据支持\n        2. 清晰列出关键发现\n        3. 控制在500字以内\n        4. 使用markdown格式\n        '}], 'temperature': 0.3, 'max_tokens': 800}
+2025-04-06 09:46:19.048 | INFO     | __main__:generate:78 - 发送请求到DeepSeek API...
+2025-04-06 09:47:02.721 | DEBUG    | __main__:generate:107 - API响应状态码: 200
+2025-04-06 09:47:02.721 | DEBUG    | __main__:generate:108 - API响应内容: {"id":"019608c6f76dfc94ca9215713adc097d","object":"chat.completion","created":1743903979,"model":"deepseek-ai/DeepSeek-R1","choices":[{"index":0,"message":{"role":"assistant","content":"","reasoning_content":"好的，我现在需要分析用户提供的用水数据，找出可能的漏水情况。首先，用户给的数据看起来是关于一个用户ID为1的用水记录，时间从2025年1月到4月，每个月的抄表日期似乎每隔10天一次，比如1月1日、11日、21日，然后下个月又是类似的日期。用水量一开始都是1方，到了3月11日突然增加到6方，接着3月21日12方，4月1日24方。统计显示平均4.9方，最大24方，最小1方。\n\n首先，按照用户的分析要求，我需要分四个部分：数据概览、用水模式分析、漏水风险识别和建议。不过用户只提供了单个用户的数据，所以数据概览里的用户数量可能只有1个，记录数是10条。用水量的分布范围从1到24方...
+2025-04-06 09:47:02.721 | INFO     | __main__:generate:113 - 成功使用模型 deepseek-ai/DeepSeek-R1
+2025-04-06 09:47:02.721 | INFO     | __main__:generate:120 - 使用reasoning_content字段作为回复内容
+2025-04-06 09:47:02.721 | INFO     | __main__:main:572 - 数据库分析成功
+2025-04-06 09:47:02.722 | INFO     | __main__:main:578 - 分析报告已保存到: /Users/aladam/Desktop/langgraph-demo/database_analysis_report.md
+2025-04-06 09:47:02.722 | INFO     | __main__:close_db:222 - 数据库连接已关闭
+2025-04-06 09:47:02.722 | INFO     | __main__:main:599 - 分析完成
+2025-04-06 09:54:55.573 | INFO     | __main__:main:548 - 开始分析数据库...
+2025-04-06 09:54:55.573 | INFO     | __main__:main:552 - 数据库路径: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:54:55.573 | INFO     | __main__:connect_db:213 - 成功连接到数据库: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:54:55.574 | INFO     | __main__:get_transaction_data:233 - transactions表结构:
+2025-04-06 09:54:55.574 | INFO     | __main__:get_transaction_data:235 - 列名: id, 类型: TEXT
+2025-04-06 09:54:55.574 | INFO     | __main__:get_transaction_data:235 - 列名: account_id, 类型: TEXT
+2025-04-06 09:54:55.574 | INFO     | __main__:get_transaction_data:235 - 列名: amount, 类型: REAL
+2025-04-06 09:54:55.574 | INFO     | __main__:get_transaction_data:235 - 列名: type, 类型: TEXT
+2025-04-06 09:54:55.574 | INFO     | __main__:get_transaction_data:235 - 列名: timestamp, 类型: TIMESTAMP
+2025-04-06 09:54:55.574 | INFO     | __main__:get_transaction_data:235 - 列名: description, 类型: TEXT
+2025-04-06 09:54:55.574 | INFO     | __main__:get_transaction_data:235 - 列名: metadata, 类型: TEXT
+2025-04-06 09:54:55.575 | INFO     | __main__:get_transaction_data:275 - 成功获取1个账户的交易数据
+2025-04-06 09:54:55.575 | INFO     | __main__:__init__:58 - 初始化DeepSeek-R1模型，API基础URL: https://api.siliconflow.cn/v1，模型: deepseek-ai/DeepSeek-R1
+2025-04-06 09:54:55.575 | INFO     | __main__:__init__:307 - 初始化大模型分析器完成
+2025-04-06 09:54:55.575 | INFO     | __main__:main:569 - 开始分析整个数据库...
+2025-04-06 09:54:55.575 | INFO     | __main__:analyze_data:325 - 调用大模型API...
+2025-04-06 09:54:55.576 | DEBUG    | __main__:generate:76 - API请求体: {'model': 'deepseek-ai/DeepSeek-R1', 'messages': [{'role': 'system', 'content': '你是一个专业的水量异常数据分析师，擅长分析数据库中用水量异常的情况，提供深入的见解。'}, {'role': 'user', 'content': '\n        请对以下用水数据进行分析，重点关注可能存在的漏水情况。\n\n        数据库名称: account_data.db\n        分析目标: 用水量异常分析\n        \n        === 数据说明 ===\n        - metadata中的date字段为抄表日期\n        - amount字段为用水量（单位：方）\n        传来的数据一般分为两种，一种是1天一传数据的水表，另一种是10天一传数据的水表。\n        也有因为水表传输问题，导致数据缺失的情况，比如10天一传的水表，有10天没有数据，那么就相隔20天，才有数据，那么就需要平均这20天的数据，转换成10天平均数据，再分析。\n        也有1天一传数据的水表，但是因为水表传输问题，导致数据缺失的情况，比如1天一传的水表，有3天没有数据，那么就需要分析第四天传来的数据，转换成1天平均数据，再分析。\n        === 原始用水数据 ===\n        \n用户ID: 1\n用水记录:\n- 抄表日期: 2025-01-01, 用水量: 1.0方\n- 抄表日期: 2025-01-11, 用水量: 1.0方\n- 抄表日期: 2025-01-21, 用水量: 1.0方\n- 抄表日期: 2025-02-01, 用水量: 1.0方\n- 抄表日期: 2025-02-11, 用水量: 1.0方\n- 抄表日期: 2025-02-21, 用水量: 1.0方\n- 抄表日期: 2025-03-01, 用水量: 1.0方\n- 抄表日期: 2025-03-11, 用水量: 6.0方\n- 抄表日期: 2025-03-21, 用水量: 12.0方\n- 抄表日期: 2025-04-01, 用水量: 24.0方\n用水统计: 平均用水量: 4.90方, 最大用水量: 24.00方, 最小用水量: 1.00方\n\n        === 分析要求 ===\n        请提供以下方面的分析：\n\n        1. 数据概览\n        - 分析的用户数量和总用水记录数\n        - 用水量的分布范围\n\n        2. 用水模式分析\n        - 各用户的用水频率和用量特征\n        - 是否存在异常大额或小额用水\n        - 用水时间的分布特征\n\n        3. 漏水风险识别\n        - 标出任何可能的漏水情况\n        - 对于疑似漏水，给出具体的数据支持\n        \n        漏水判断标准：\n        - 居民用水：正常情况下日均用水量约1方以下；如果用量持续增加并超过3方可能是管道漏水；\n          如果突然超过5方或连续每天都有0.5-1方用水可能是器具漏水\n        - 商业用水：正常情况下日均用水量约10-50方；如果当前用量较之前增大一倍可能存在漏水\n\n        4. 建议\n        - 对于发现的问题提供具体的处理建议\n        - 如果发现漏水，建议采取的措施\n        \n        请确保分析报告：\n        1. 包含具体的数据支持\n        2. 清晰列出关键发现\n        3. 控制在500字以内\n        4. 使用markdown格式\n        '}], 'temperature': 0.3, 'max_tokens': 800}
+2025-04-06 09:54:55.576 | INFO     | __main__:generate:78 - 发送请求到DeepSeek API...
+2025-04-06 09:56:04.033 | DEBUG    | __main__:generate:107 - API响应状态码: 200
+2025-04-06 09:56:04.033 | DEBUG    | __main__:generate:108 - API响应内容: {"id":"019608ced956e655f1e9f9082fa94c23","object":"chat.completion","created":1743904496,"model":"deepseek-ai/DeepSeek-R1","choices":[{"index":0,"message":{"role":"assistant","content":"","reasoning_content":"好的，我现在需要分析用户ID为1的用水数据，看看是否存在漏水情况。首先，我得仔细看一下用户提供的原始数据和分析要求。\n\n数据概览部分，用户只提供了ID 1的记录，所以用户数量是1。用水记录共有10条，从2025年1月1日到4月1日，每个记录间隔大约10天，除了最后几个可能有变化吗？比如3月11日到21日，间隔也是10天，之后到4月1日也是10天。看起来这个用户的水表是10天传输一次数据的类型，但需要确认是否有数据缺失的情况。\n\n接下来看用水量。前七次的用水量都是1.0方，每次间隔10天，所以日均用水量是1.0方除以10天，每天0.1方，这远低于居民的正常标准1方/天。...
+2025-04-06 09:56:04.034 | INFO     | __main__:generate:113 - 成功使用模型 deepseek-ai/DeepSeek-R1
+2025-04-06 09:56:04.034 | INFO     | __main__:generate:120 - 使用reasoning_content字段作为回复内容
+2025-04-06 09:56:04.034 | INFO     | __main__:main:573 - 数据库分析成功
+2025-04-06 09:56:04.034 | INFO     | __main__:main:579 - 分析报告已保存到: /Users/aladam/Desktop/langgraph-demo/database_analysis_report.md
+2025-04-06 09:56:04.035 | INFO     | __main__:close_db:222 - 数据库连接已关闭
+2025-04-06 09:56:04.035 | INFO     | __main__:main:600 - 分析完成
+2025-04-06 09:58:47.326 | INFO     | __main__:main:532 - 开始分析数据库...
+2025-04-06 09:58:47.326 | INFO     | __main__:main:536 - 数据库路径: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:58:47.327 | INFO     | __main__:connect_db:213 - 成功连接到数据库: /Users/aladam/Desktop/langgraph-demo/data/account_data.db
+2025-04-06 09:58:47.327 | INFO     | __main__:get_transaction_data:233 - transactions表结构:
+2025-04-06 09:58:47.327 | INFO     | __main__:get_transaction_data:235 - 列名: id, 类型: TEXT
+2025-04-06 09:58:47.327 | INFO     | __main__:get_transaction_data:235 - 列名: account_id, 类型: TEXT
+2025-04-06 09:58:47.328 | INFO     | __main__:get_transaction_data:235 - 列名: amount, 类型: REAL
+2025-04-06 09:58:47.328 | INFO     | __main__:get_transaction_data:235 - 列名: type, 类型: TEXT
+2025-04-06 09:58:47.328 | INFO     | __main__:get_transaction_data:235 - 列名: timestamp, 类型: TIMESTAMP
+2025-04-06 09:58:47.328 | INFO     | __main__:get_transaction_data:235 - 列名: description, 类型: TEXT
+2025-04-06 09:58:47.328 | INFO     | __main__:get_transaction_data:235 - 列名: metadata, 类型: TEXT
+2025-04-06 09:58:47.329 | INFO     | __main__:get_transaction_data:275 - 成功获取1个账户的交易数据
+2025-04-06 09:58:47.329 | INFO     | __main__:__init__:58 - 初始化DeepSeek-R1模型，API基础URL: https://api.siliconflow.cn/v1，模型: deepseek-ai/DeepSeek-R1
+2025-04-06 09:58:47.329 | INFO     | __main__:__init__:307 - 初始化大模型分析器完成
+2025-04-06 09:58:47.329 | INFO     | __main__:main:553 - 开始分析整个数据库...
+2025-04-06 09:58:47.329 | INFO     | __main__:analyze_data:325 - 调用大模型API...
+2025-04-06 09:58:47.329 | DEBUG    | __main__:generate:76 - API请求体: {'model': 'deepseek-ai/DeepSeek-R1', 'messages': [{'role': 'system', 'content': '你是一个专业的水量异常数据分析师，擅长分析数据库中用水量异常的情况，提供深入的见解。'}, {'role': 'user', 'content': '\n        请分析以下用水数据并直接给出结论。不需要展示分析过程，只需要提供关键发现和建议。\n\n        数据库名称: account_data.db\n        分析目标: 用水量异常分析\n        \n        === 原始用水数据 ===\n        \n用户ID: 1\n用水记录:\n- 抄表日期: 2025-01-01, 用水量: 1.0方\n- 抄表日期: 2025-01-11, 用水量: 1.0方\n- 抄表日期: 2025-01-21, 用水量: 1.0方\n- 抄表日期: 2025-02-01, 用水量: 1.0方\n- 抄表日期: 2025-02-11, 用水量: 1.0方\n- 抄表日期: 2025-02-21, 用水量: 1.0方\n- 抄表日期: 2025-03-01, 用水量: 1.0方\n- 抄表日期: 2025-03-11, 用水量: 6.0方\n- 抄表日期: 2025-03-21, 用水量: 12.0方\n- 抄表日期: 2025-04-01, 用水量: 24.0方\n用水统计: 平均用水量: 4.90方, 最大用水量: 24.00方, 最小用水量: 1.00方\n\n        === 分析要求 ===\n        请直接给出以下内容，不要包含分析过程：\n\n        1. 关键发现\n        - 用户数量和记录数\n        - 是否存在异常用水\n        - 是否存在漏水风险（根据以下标准）\n        \n        漏水判断标准：\n        - 居民用水：日均用水量>1方或持续增加并超过3方可能是管道漏水\n        - 商业用水：日均用水量突增1倍以上可能存在漏水\n\n        2. 处理建议\n        - 如发现异常，直接给出具体的处理措施\n        \n        要求：\n        1. 使用markdown格式\n        2. 简明扼要，控制在200字以内\n        3. 直接给出结论，不要解释分析过程\n        4. 如果发现漏水风险，需要在开头用醒目的方式标注\n        '}], 'temperature': 0.3, 'max_tokens': 800}
+2025-04-06 09:58:47.329 | INFO     | __main__:generate:78 - 发送请求到DeepSeek API...
+2025-04-06 09:59:07.746 | DEBUG    | __main__:generate:107 - API响应状态码: 200
+2025-04-06 09:59:07.746 | DEBUG    | __main__:generate:108 - API响应内容: {"id":"019608d262a8028d63f711466ff0cb4c","object":"chat.completion","created":1743904728,"model":"deepseek-ai/DeepSeek-R1","choices":[{"index":0,"message":{"role":"assistant","content":"```markdown\n**⚠️ 检测到高漏水风险**\n\n### 关键发现\n- **用户数量**: 1户  \n- **记录数**: 10条  \n- **异常用水**: 是（3月11日起水量逐次暴增600%-2400%）  \n- **漏水风险**: 是（居民日均用水量超3方且持续增长，4月达日均24方）\n\n### 处理建议\n1. 立即联系用户ID:1核查管道/设备  \n2. 建议安装实时水表监测  \n3. 关闭非必要阀门排查漏点  \n4. 持续跟踪后续抄表数据\n```","reasoning_content":"好的，我现在需要分析用户提供的用水数据，并按照他们的要求给出关键发现和处理建议。首先...
+2025-04-06 09:59:07.746 | INFO     | __main__:generate:113 - 成功使用模型 deepseek-ai/DeepSeek-R1
+2025-04-06 09:59:07.746 | INFO     | __main__:main:557 - 数据库分析成功
+2025-04-06 09:59:07.747 | INFO     | __main__:main:563 - 分析报告已保存到: /Users/aladam/Desktop/langgraph-demo/database_analysis_report.md
+2025-04-06 09:59:07.747 | INFO     | __main__:close_db:222 - 数据库连接已关闭
+2025-04-06 09:59:07.747 | INFO     | __main__:main:584 - 分析完成
