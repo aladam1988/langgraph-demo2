@@ -460,6 +460,7 @@ class LLMAnalyzer:
         account_data = water_usage_data[0]
         account_id = account_data.get("account_id", "未知")
         dates = account_data.get("dates", [])
+        readings = account_data.get("current_reading", [])  # 获取水表读数
         amounts = account_data.get("amount", [])
         daily_avgs = account_data.get("daily_average", [])
         
@@ -492,20 +493,31 @@ class LLMAnalyzer:
             has_high_usage = False
             has_leak_risk = False
         
+        # 添加water_meter_reading信息到提示中
+        reading_info = ""
+        if readings and len(readings) > 0:
+            reading_info = f"\n4. **水表读数**: 最新读数 {readings[-1]}，初始读数 {readings[0]}"
+        
         # 超级精简的提示，直接提供几乎所有分析结果，让模型只需要格式化
         prompt = f"""
 填充以下用水分析模板，不要添加任何额外内容：
 
 ```
 {("⚠️ 漏水风险警告" if has_leak_risk else "")}
-
+漏水可能性：（无/低/中/高）
 **账户 {account_id} 关键发现**
 1. **记录数量和时间跨度**：{len(dates)}条记录，覆盖{time_span}
 2. **异常用水**：{f"存在{max_amount}方的高用水量（{max_date}）" if has_high_usage else "无明显异常用水"}
-3. **漏水风险**：{f"日均用水量达{max_daily_avg:.1f}方，超过安全阈值3方" if has_high_daily else "无明显漏水风险"}
+3. **漏水风险**：{f"日均用水量达{max_daily_avg:.1f}方，超过安全阈值3方" if has_high_daily else "无明显漏水风险"}{reading_info}
+
+---
+*报告生成时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}*
 ```
 
 提示：
+- 账户ID: {account_id}
+- 读表时间: {dates[-1] if dates else "未知"}
+- 当前读数: {readings[-1] if readings else "未知"}
 - 居民日均用水>1方或连续增长并超过3方表示漏水风险
 - 商业用水突增1倍以上表示漏水风险
 - 仅返回模板内容，不添加任何分析过程
@@ -600,6 +612,11 @@ def main():
     db_path = config.get("account_data_db")
     print(f"数据库路径: {db_path}")
     
+    # 在main函数开头添加
+    reports_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "reports")
+    os.makedirs(reports_dir, exist_ok=True)
+    print(f"报告将保存到: {reports_dir}")
+    
     try:
         # 初始化数据分析器
         analyzer = AccountDataAnalyzer(db_path)
@@ -631,6 +648,7 @@ def main():
                     """
                     SELECT 
                         reading_time,
+                        current_reading,
                         current_usage,
                         daily_average
                     FROM meter_readings 
@@ -642,12 +660,14 @@ def main():
                 rows = analyzer.cursor.fetchall()
                 
                 dates = []
+                readings = []  # 添加水表读数列表
                 amounts = []
                 daily_avgs = []
                 for row in rows:
                     dates.append(row[0])  # reading_time
-                    amounts.append(row[1])  # current_usage
-                    daily_avgs.append(row[2])  # daily_average
+                    readings.append(row[1])  # current_reading
+                    amounts.append(row[2])  # current_usage
+                    daily_avgs.append(row[3])  # daily_average
                 
                 # 准备单个账户数据
                 account_data = {
@@ -656,6 +676,7 @@ def main():
                     "water_usage_data": [{
                         "account_id": account_id,
                         "dates": dates,
+                        "current_reading": readings,  # 添加水表读数
                         "amount": amounts,
                         "daily_average": daily_avgs
                     }]
@@ -668,15 +689,21 @@ def main():
                 analysis_time = time.time() - account_start_time
                 
                 # 保存分析结果
-                output_file = os.path.join(config["root_dir"], f"account_{account_id}_analysis_report.md")
+                output_file = os.path.join(reports_dir, f"account_{account_id}_analysis_report.md")
                 with open(output_file, "w", encoding="utf-8") as f:
                     f.write(result["analysis"])
                 
-                # 根据结果类型显示不同的标记
+                # 获取报告的绝对路径
+                report_path = os.path.abspath(output_file)
+                file_url = f"file://{report_path}"
+                
+                # 根据结果类型显示不同的标记并添加链接
                 if result["success"]:
                     print(f"✓ 账户 {account_id} 分析报告已保存 (用时: {analysis_time:.1f}秒)")
+                    print(f"  报告链接: {file_url}")
                 else:
                     print(f"! 账户 {account_id} 分析失败，超时信息已保存 (用时: {analysis_time:.1f}秒)")
+                    print(f"  报告链接: {file_url}")
                 
                 # 关闭数据库连接
                 analyzer.close_db()
