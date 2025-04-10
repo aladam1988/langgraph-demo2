@@ -63,7 +63,8 @@ def load_config():
         "max_workers": int(os.getenv("MAX_WORKERS", "5")),  # 减少工作线程数
         "batch_size": int(os.getenv("BATCH_SIZE", "5")),    # 减少批处理大小
         "use_local_storage": os.getenv("USE_LOCAL_STORAGE", "true").lower() == "true",
-        "account_data_db": os.path.join(root_dir, "data/account_data.db"),
+        "account_data_db": os.path.join(root_dir, "data/account_data1.db"),  # 修改为account_data1.db
+        "historical_data_db": os.path.join(root_dir, "data/account_data2.db"),  # 添加account_data2.db
         "root_dir": root_dir,
         "use_mock_analysis": os.getenv("USE_MOCK_ANALYSIS", "false").lower() == "true",  # 添加模拟分析开关
         "reports_dir": os.path.join(root_dir, "reports")
@@ -97,7 +98,7 @@ class DeepSeekR1:
             "temperature": self.temperature,
             "max_tokens": 800
         }
-            
+        
         logger.info(f"发送请求到DeepSeek API...")
         
         # 开始计时
@@ -453,8 +454,8 @@ class LLMAnalyzer:
                     return {
                         "success": False,
                         "error": "处理后内容为空",
-                        "analysis": self._generate_mock_analysis(data)
-                    }
+                    "analysis": self._generate_mock_analysis(data)
+                }
             
             return {
                 "success": True,
@@ -520,9 +521,7 @@ class LLMAnalyzer:
             has_leak_risk = False
         
         # 添加water_meter_reading信息到提示中
-        reading_info = ""
-        if readings and len(readings) > 0:
-            reading_info = f"\n4. **水表读数**: 最新读数 {readings[-1]}，初始读数 {readings[0]}"
+        reading_info = f"\n   最新读数 {readings[-1]}，初始读数 {readings[0]}" if readings and len(readings) > 0 else ""
         
         # 超级精简的提示，直接提供几乎所有分析结果，让模型只需要格式化
         prompt = f"""
@@ -624,18 +623,84 @@ def test_model_list():
         logger.error(f"获取模型列表失败: {str(e)}")
         return None
 
+def process_historical_data(history_rows):
+    """处理历史抄表数据并计算日均用水量
+    
+    参数:
+        history_rows: 从数据库获取的历史抄表记录
+        
+    返回:
+        包含历史日期、读数和日均用水量的字典
+    """
+    from datetime import datetime
+    
+    # 初始化历史数据变量
+    historical_dates = []
+    historical_readings = []
+    historical_daily_avgs = []
+    historical_daily_avg = 0
+    
+    if len(history_rows) >= 2:
+        # 将历史数据按日期排序
+        history_rows_sorted = sorted(history_rows, key=lambda x: datetime.strptime(x[0], "%Y/%m/%d"))
+        
+        print(f"  历史数据排序后:")
+        for index, row in enumerate(history_rows_sorted):
+            print(f"    {index+1}. {row[0]} - {row[1]}方")
+            historical_dates.append(row[0])
+            historical_readings.append(row[1])
+        
+        for i in range(1, len(history_rows_sorted)):
+            # 计算两次抄表之间的天数
+            prev_date = datetime.strptime(history_rows_sorted[i-1][0], "%Y/%m/%d")
+            curr_date = datetime.strptime(history_rows_sorted[i][0], "%Y/%m/%d")
+            days_diff = (curr_date - prev_date).days
+            
+            # 确保天数不为零，避免除零错误
+            if days_diff <= 0:
+                print(f"  警告: 日期差异异常 {prev_date.date()} -> {curr_date.date()}, 跳过此计算")
+                continue
+            
+            # 计算用水量差值
+            prev_reading = history_rows_sorted[i-1][1]
+            curr_reading = history_rows_sorted[i][1]
+            usage = curr_reading - prev_reading
+            
+            # 计算日均用水量
+            daily_avg = usage / days_diff
+            
+            # 只添加合理的值（正值）
+            if daily_avg > 0:
+                historical_daily_avgs.append(daily_avg)
+                # 打印日志，帮助调试计算过程
+                print(f"  历史: {prev_date.date()} -> {curr_date.date()}, {days_diff}天, 用水量: {usage}方, 日均: {daily_avg:.4f}方/日")
+        
+        # 计算平均日均用水量，只使用正值
+        if historical_daily_avgs:
+            historical_daily_avg = sum(historical_daily_avgs) / len(historical_daily_avgs)
+            print(f"  历史平均日用水量: {historical_daily_avg:.4f}方/日")
+        else:
+            print(f"  没有找到有效的历史日均用水量数据")
+    
+    return {
+        "historical_dates": historical_dates,
+        "historical_readings": historical_readings,
+        "historical_daily_avgs": historical_daily_avgs,
+        "historical_daily_avg": historical_daily_avg
+    }
+
 def fetch_account_data(state: GraphState) -> GraphState:
     """从数据库获取账户数据"""
     config = load_config()
     account_id = state["account_id"]
     
     try:
-        # 连接数据库
-        conn = sqlite3.connect(config["account_data_db"])
-        cursor = conn.cursor()
+        # 连接数据库1 (account_data1.db)
+        conn1 = sqlite3.connect(config["account_data_db"])
+        cursor1 = conn1.cursor()
         
         # 获取账户数据
-        cursor.execute(
+        cursor1.execute(
             """
             SELECT 
                 reading_time,
@@ -648,7 +713,7 @@ def fetch_account_data(state: GraphState) -> GraphState:
             """, 
             (account_id,)
         )
-        rows = cursor.fetchall()
+        rows1 = cursor1.fetchall()
         
         # 解析数据
         dates = []
@@ -656,14 +721,42 @@ def fetch_account_data(state: GraphState) -> GraphState:
         amounts = []
         daily_avgs = []
         
-        for row in rows:
+        for row in rows1:
             dates.append(row[0])
             readings.append(row[1])
             amounts.append(row[2])
             daily_avgs.append(row[3])
         
         # 关闭连接
-        conn.close()
+        conn1.close()
+        
+        # 连接数据库2 (account_data2.db)
+        conn2 = sqlite3.connect(config["historical_data_db"])
+        cursor2 = conn2.cursor()
+        
+        # 获取最近半年的历史抄表数据
+        from datetime import datetime, timedelta
+        six_months_ago = (datetime.now() - timedelta(days=180)).strftime("%Y/%m/%d")
+        
+        cursor2.execute(
+            """
+            SELECT 
+                reading_time,
+                reading_value
+            FROM historical_readings 
+            WHERE account_id = ? AND reading_time >= ?
+            ORDER BY reading_time
+            """, 
+            (account_id, six_months_ago)
+        )
+        
+        rows2 = cursor2.fetchall()
+        
+        # 处理历史数据
+        historical_data = process_historical_data(rows2)
+        
+        # 关闭连接
+        conn2.close()
         
         return {
             **state,
@@ -671,6 +764,10 @@ def fetch_account_data(state: GraphState) -> GraphState:
             "readings": readings,
             "amounts": amounts,
             "daily_avgs": daily_avgs,
+            "historical_dates": historical_data["historical_dates"],
+            "historical_readings": historical_data["historical_readings"],
+            "historical_daily_avgs": historical_data["historical_daily_avgs"],
+            "historical_daily_avg": historical_data["historical_daily_avg"],
             "success": True
         }
     except Exception as e:
@@ -687,8 +784,11 @@ def calculate_statistics(state: GraphState) -> GraphState:
     
     try:
         dates = state["dates"]
-        amounts = state["amounts"]
+        amounts = state["amounts"]  # current_usage: 该日期的抄表用水量
+        readings = state["readings"]  # current_reading: 抄的水表止度
         daily_avgs = state["daily_avgs"]
+        historical_daily_avgs = state.get("historical_daily_avgs", [])
+        historical_daily_avg = state.get("historical_daily_avg", 0)
         
         if not amounts:
             raise ValueError("没有用水数据")
@@ -705,6 +805,7 @@ def calculate_statistics(state: GraphState) -> GraphState:
             "time_span": f"{dates[0]} 至 {dates[-1]}",
             "record_count": len(dates),
             "has_zero_usage": any(float(amount) == 0 for amount in amounts),
+            # 单次用水超过5方作为漏水一个判断条件 - 使用current_usage判断
             "has_high_usage": any(float(amount) > 5 for amount in amounts),
         }
         
@@ -712,13 +813,63 @@ def calculate_statistics(state: GraphState) -> GraphState:
         if daily_avgs:
             daily_avgs_float = [float(avg) for avg in daily_avgs]
             stats["max_daily_avg"] = max(daily_avgs_float)
+            
+            # 检查是否存在高日均用水
             stats["has_high_daily"] = stats["max_daily_avg"] > 3
+            
+            # 检查近期是否有两次漏水情况（超过3方的日均用水被视为漏水）
+            recent_daily_avgs = daily_avgs_float[-5:] if len(daily_avgs_float) > 5 else daily_avgs_float
+            leak_count = sum(1 for avg in recent_daily_avgs if avg > 3)
+            stats["has_multiple_leaks"] = leak_count >= 2
         else:
             stats["max_daily_avg"] = 0
             stats["has_high_daily"] = False
+            stats["has_multiple_leaks"] = False
+        
+        # 使用已处理的历史数据日均用水量
+        if historical_daily_avg > 0:
+            stats["historical_avg_daily"] = historical_daily_avg
             
-        # 计算风险
-        stats["has_leak_risk"] = stats["has_high_daily"] or stats["has_high_usage"]
+            # 计算最大历史日均用水量
+            if historical_daily_avgs:
+                stats["historical_max_daily"] = max(historical_daily_avgs)
+            else:
+                stats["historical_max_daily"] = historical_daily_avg
+            
+            # 计算历史数据与当前数据的差异比例（使用current_usage）
+            if stats["avg_amount"] > 0:
+                stats["usage_increase_ratio"] = stats["avg_amount"] / historical_daily_avg
+                
+                # 检查是否连续超过历史平均用水量一倍 - 使用current_usage判断
+                if len(amounts_float) >= 3:
+                    recent_amounts = amounts_float[-3:]
+                    recent_ratios = [amount / historical_daily_avg for amount in recent_amounts]
+                    stats["has_continuous_high_usage"] = all(ratio > 2.0 for ratio in recent_ratios)
+                else:
+                    stats["has_continuous_high_usage"] = False
+                
+                # 更新为新的判断标准：超过历史平均用水量一倍（而不是50%）
+                stats["has_significant_increase"] = stats["usage_increase_ratio"] > 2.0
+            else:
+                stats["usage_increase_ratio"] = 1.0
+                stats["has_significant_increase"] = False
+                stats["has_continuous_high_usage"] = False
+        else:
+            stats["historical_avg_daily"] = 0
+            stats["historical_max_daily"] = 0
+            stats["usage_increase_ratio"] = 1.0
+            stats["has_significant_increase"] = False
+            stats["has_continuous_high_usage"] = False
+            
+        # 更新漏水风险判断标准，满足以下任一条件:
+        # 1. 近期出现两次漏水情况
+        # 2. 单次漏水超过5方
+        # 3. 最近连续出现超过历史平均用水量一倍的情况
+        stats["has_leak_risk"] = (
+            stats["has_multiple_leaks"] or 
+            stats["has_high_usage"] or 
+            stats["has_continuous_high_usage"]
+        )
         
         return {
             **state,
@@ -744,9 +895,14 @@ def create_analysis_prompt(state: GraphState) -> GraphState:
         stats = state["stats"]
         
         # 添加读数信息
-        reading_info = ""
-        if readings and len(readings) > 0:
-            reading_info = f"\n4. **水表读数**: 最新读数 {readings[-1]}，初始读数 {readings[0]}"
+        reading_info = f"\n   最新读数 {readings[-1]}，初始读数 {readings[0]}" if readings and len(readings) > 0 else ""
+        
+        # 添加历史数据对比信息
+        historical_comparison = ""
+        if stats["historical_avg_daily"] > 0:
+            increase_ratio = stats["usage_increase_ratio"]
+            increase_percent = (increase_ratio - 1) * 100
+            historical_comparison = f"，比历史增加了{increase_percent:.1f}%"
         
         # 确定是否存在漏水风险
         risk_warning = "⚠️ 漏水风险警告" if stats["has_leak_risk"] else ""
@@ -767,10 +923,13 @@ def create_analysis_prompt(state: GraphState) -> GraphState:
 - 最小用水量: {stats["min_amount"]}方
 - 平均用水量: {stats["avg_amount"]:.2f}方
 - 最大日均用水量: {stats["max_daily_avg"]:.2f}方
+- 历史半年日均用水量: {stats["historical_avg_daily"]:.2f}方
+- 当前与历史用水量比率: {stats["usage_increase_ratio"]:.2f}
 
 ## 异常标准
-- 居民日均用水>1方为正常，>3方表示可能存在漏水
-- 商业用水突增1倍以上表示可能存在漏水
+- 近期出现两次漏水情况（日均用水>3方）
+- 单次漏水超过5方
+- 最近连续出现超过历史平均用水量一倍的情况
 
 ## 填充以下模板（无需解释分析过程）:
 
@@ -781,6 +940,7 @@ def create_analysis_prompt(state: GraphState) -> GraphState:
 1. **记录数量和时间跨度**：{stats["record_count"]}条记录，覆盖{stats["time_span"]}
 2. **异常用水**：{f"存在{stats['max_amount']}方的高用水量（{stats['max_date']}）" if stats["has_high_usage"] else "无明显异常用水"}
 3. **漏水风险**：{f"日均用水量达{stats['max_daily_avg']:.1f}方，超过安全阈值3方" if stats["has_high_daily"] else "无明显漏水风险"}{reading_info}
+4. **历史用水数据**：历史平均日用水量 {stats["historical_avg_daily"]:.2f}方/日{historical_comparison}
 
 ---
 *报告生成时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}*
@@ -1022,13 +1182,29 @@ def main():
     
     # 获取账户列表
     try:
+        # 连接主数据库
         conn = sqlite3.connect(config["account_data_db"])
         cursor = conn.cursor()
         cursor.execute("SELECT DISTINCT account_id FROM meter_readings ORDER BY account_id")
         account_ids = [row[0] for row in cursor.fetchall()]
         conn.close()
         
-        print(f"找到 {len(account_ids)} 个账户")
+        # 验证历史数据库中的账户
+        conn2 = sqlite3.connect(config["historical_data_db"])
+        cursor2 = conn2.cursor()
+        cursor2.execute("SELECT DISTINCT account_id FROM historical_readings ORDER BY account_id")
+        historical_account_ids = [row[0] for row in cursor2.fetchall()]
+        conn2.close()
+        
+        # 找出两个数据库中共有的账户ID
+        common_account_ids = list(set(account_ids).intersection(set(historical_account_ids)))
+        
+        print(f"找到 {len(account_ids)} 个主数据库账户")
+        print(f"找到 {len(historical_account_ids)} 个历史数据库账户")
+        print(f"两个数据库共有 {len(common_account_ids)} 个账户")
+        
+        # 使用共有的账户ID列表
+        account_ids = common_account_ids
     except Exception as e:
         print(f"获取账户列表失败: {str(e)}")
         return
@@ -1067,10 +1243,13 @@ def main():
 - 最小用水量: {min_amount}方
 - 平均用水量: {avg_amount:.2f}方
 - 最大日均用水量: {max_daily_avg:.2f}方
+- 历史半年日均用水量: {historical_avg_daily:.2f}方
+- 当前与历史用水量比率: {usage_increase_ratio:.2f}
 
 ## 异常标准
-- 居民日均用水>1方为正常，>3方表示可能存在漏水
-- 商业用水突增1倍以上表示可能存在漏水
+- 近期出现两次漏水情况（日均用水>3方）
+- 单次漏水超过5方
+- 最近连续出现超过历史平均用水量一倍的情况
 
 ## 填充以下模板（无需解释分析过程）:
 
@@ -1081,6 +1260,7 @@ def main():
 1. **记录数量和时间跨度**：{record_count}条记录，覆盖{time_span}
 2. **异常用水**：{abnormal_usage}
 3. **漏水风险**：{leak_risk_text}{reading_info}
+4. **历史用水数据**：历史平均日用水量 {historical_avg_daily:.2f}方/日{historical_comparison}
 
 ---
 *报告生成时间: {generation_time}*
@@ -1134,12 +1314,12 @@ def main():
             
             # 数据获取耗时
             fetch_time = time.time() - fetch_start
-            print(f"  数据获取: {fetch_time:.4f}秒")
+            print(f"  主数据获取: {fetch_time:.4f}秒")
             
             # 解析数据
             dates = []
-            readings = []
-            amounts = []
+            readings = []  # current_reading: 抄的水表止度
+            amounts = []   # current_usage: 该日期的抄表用水量
             daily_avgs = []
             
             for row in rows:
@@ -1147,9 +1327,41 @@ def main():
                 readings.append(row[1])
                 amounts.append(row[2])
                 daily_avgs.append(row[3])
+                
+            # 获取历史数据
+            fetch_history_start = time.time()
+            conn2 = sqlite3.connect(config["historical_data_db"])
+            cursor2 = conn2.cursor()
+            
+            # 获取最近半年的历史抄表数据
+            from datetime import datetime, timedelta
+            six_months_ago = (datetime.now() - timedelta(days=180)).strftime("%Y/%m/%d")
+            
+            cursor2.execute(
+                """
+                SELECT 
+                    reading_time,
+                    reading_value
+                FROM historical_readings 
+                WHERE account_id = ? AND reading_time >= ?
+                ORDER BY reading_time
+                """, 
+                (account_id, six_months_ago)
+            )
+            
+            history_rows = cursor2.fetchall()
+            conn2.close()
+            
+            # 历史数据获取耗时
+            fetch_history_time = time.time() - fetch_history_start
+            print(f"  历史数据获取: {fetch_history_time:.4f}秒")
+            
+            # 处理历史数据
+            historical_data = process_historical_data(history_rows)
+            historical_daily_avg = historical_data["historical_daily_avg"]
             
             # 计算统计数据
-            amounts_float = [float(amount) for amount in amounts]
+            amounts_float = [float(amount) for amount in amounts]  # current_usage: 该日期的用水量
             avg_amount = sum(amounts_float) / len(amounts_float) if amounts_float else 0
             max_amount = max(amounts_float) if amounts_float else 0
             max_date = dates[amounts_float.index(max(amounts_float))] if amounts_float else "未知"
@@ -1157,17 +1369,47 @@ def main():
             time_span = f"{dates[0]} 至 {dates[-1]}" if dates else "未知"
             record_count = len(dates)
             
-            # 计算风险相关数据
+            # 计算风险相关数据 - 使用current_usage判断是否超过5方
             has_high_usage = any(float(amount) > 5 for amount in amounts)
             max_daily_avg = max([float(avg) for avg in daily_avgs]) if daily_avgs else 0
-            has_high_daily = max_daily_avg > 3
-            has_leak_risk = has_high_daily or has_high_usage
             
-            # 准备提示变量
-            reading_info = f"\n4. **水表读数**: 最新读数 {readings[-1]}，初始读数 {readings[0]}" if readings else ""
+            # 检查近期是否有两次漏水情况 - 用daily_average判断
+            recent_daily_avgs = [float(avg) for avg in daily_avgs[-5:]] if len(daily_avgs) > 5 else [float(avg) for avg in daily_avgs]
+            leak_count = sum(1 for avg in recent_daily_avgs if avg > 3)
+            has_multiple_leaks = leak_count >= 2
+            
+            # 检查是否连续超过历史平均用水量一倍 - 使用current_usage判断
+            has_continuous_high_usage = False
+            if historical_daily_avg > 0 and len(amounts_float) >= 3:
+                recent_amounts = amounts_float[-3:]
+                recent_ratios = [amount / historical_daily_avg for amount in recent_amounts]
+                has_continuous_high_usage = all(ratio > 2.0 for ratio in recent_ratios)
+            
+            # 综合风险判断 - 使用新的标准
+            has_leak_risk = has_high_usage or has_multiple_leaks or has_continuous_high_usage
+            
+            # 准备提示变量 - 明确说明读数是水表止度
+            reading_info = f"\n   最新水表止度 {readings[-1]}，初始水表止度 {readings[0]}" if readings and len(readings) > 0 else ""
+            
+            # 添加历史数据对比信息
+            historical_comparison = ""
+            if historical_daily_avg > 0:
+                increase_ratio = avg_amount / historical_daily_avg
+                increase_percent = (increase_ratio - 1) * 100
+                historical_comparison = f"，比历史增加了{increase_percent:.1f}%"
+            
             risk_warning = "⚠️ 漏水风险警告" if has_leak_risk else ""
-            abnormal_usage = f"存在{max_amount}方的高用水量（{max_date}）" if has_high_usage else "无明显异常用水"
-            leak_risk_text = f"日均用水量达{max_daily_avg:.1f}方，超过安全阈值3方" if has_high_daily else "无明显漏水风险"
+            abnormal_usage = f"单日用水量达{max_amount}方（{max_date}）" if has_high_usage else "无明显异常用水"
+            
+            # 更新漏水风险文本，根据满足的条件提供更详细的信息
+            leak_risk_text = "无明显漏水风险"
+            if has_multiple_leaks:
+                leak_risk_text = f"近期出现{leak_count}次日均用水超过3方的情况，可能存在漏水"
+            elif has_high_usage:
+                leak_risk_text = f"单日用水量达{max_amount}方，超过5方阈值，可能存在漏水"
+            elif has_continuous_high_usage:
+                leak_risk_text = f"最近连续{len(recent_amounts)}次用水量均超过历史平均用水量一倍，可能存在漏水"
+            
             generation_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             
             # 调用LangChain链
@@ -1185,10 +1427,13 @@ def main():
                 "min_amount": min_amount,
                 "avg_amount": avg_amount,
                 "max_daily_avg": max_daily_avg,
+                "historical_avg_daily": historical_daily_avg,
+                "usage_increase_ratio": avg_amount / historical_daily_avg if historical_daily_avg > 0 else 1.0,
                 "risk_warning": risk_warning,
                 "abnormal_usage": abnormal_usage,
                 "leak_risk_text": leak_risk_text,
                 "reading_info": reading_info,
+                "historical_comparison": historical_comparison,
                 "generation_time": generation_time
             })
             
@@ -1220,6 +1465,7 @@ def main():
             elapsed_time = time.time() - account_start_time
             print(f"\r失败! 用时: {elapsed_time:.1f}秒{' ' * 20}")
             print(f"! 处理账户 {account_id} 时出错: {type(e).__name__}: {str(e)}")
+            traceback.print_exc()  # 打印完整的堆栈跟踪
             
             # 生成错误报告
             error_report = f"""# 账户 {account_id} 分析失败
