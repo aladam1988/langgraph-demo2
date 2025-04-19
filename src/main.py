@@ -65,9 +65,16 @@ def load_config():
         "use_local_storage": os.getenv("USE_LOCAL_STORAGE", "true").lower() == "true",
         "account_data_db": os.path.join(root_dir, "data/account_data1.db"),  # 修改为account_data1.db
         "historical_data_db": os.path.join(root_dir, "data/account_data2.db"),  # 添加account_data2.db
+        "analysis_results_db": os.path.join(root_dir, "data/analysis_results.db"),  # 添加分析结果数据库
         "root_dir": root_dir,
         "use_mock_analysis": os.getenv("USE_MOCK_ANALYSIS", "false").lower() == "true",  # 添加模拟分析开关
-        "reports_dir": os.path.join(root_dir, "reports")
+        "reports_dir": os.path.join(root_dir, "reports"),
+        # MCP服务器配置
+        "use_mcp_server": os.getenv("USE_MCP_SERVER", "false").lower() == "true",
+        "mcp_server_host": os.getenv("MCP_SERVER_HOST", "localhost"),
+        "mcp_server_port": int(os.getenv("MCP_SERVER_PORT", "5000")),
+        "mcp_server_path": os.getenv("MCP_SERVER_PATH", "/api/data"),
+        "mcp_auth_token": os.getenv("MCP_AUTH_TOKEN", "")
     }
 
 class DeepSeekR1:
@@ -758,6 +765,14 @@ def fetch_account_data(state: GraphState) -> GraphState:
         # 关闭连接
         conn2.close()
         
+        if not dates:
+            print(f"警告：账户 {account_id} 在数据库1中没有找到数据")
+            return {
+                **state,
+                "success": False,
+                "error": f"未找到账户数据"
+            }
+        
         return {
             **state,
             "dates": dates,
@@ -771,6 +786,9 @@ def fetch_account_data(state: GraphState) -> GraphState:
             "success": True
         }
     except Exception as e:
+        print(f"获取账户 {account_id} 数据失败: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return {
             **state,
             "success": False,
@@ -871,12 +889,17 @@ def calculate_statistics(state: GraphState) -> GraphState:
             stats["has_continuous_high_usage"]
         )
         
+        print(f"成功计算账户统计数据，数据点: {len(dates)}，最大用水量: {stats['max_amount']}方")
+        
         return {
             **state,
             "stats": stats,
             "success": True
         }
     except Exception as e:
+        print(f"计算统计数据失败: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return {
             **state,
             "success": False,
@@ -947,12 +970,17 @@ def create_analysis_prompt(state: GraphState) -> GraphState:
 ```
         """
 
+        print(f"成功创建分析提示")
+        
         return {
             **state,
             "prompt": prompt,
             "success": True
         }
     except Exception as e:
+        print(f"创建分析提示失败: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return {
             **state,
             "success": False,
@@ -966,6 +994,36 @@ def call_ai_model(state: GraphState) -> GraphState:
     
     try:
         config = load_config()
+        
+        # 检查是否有API密钥
+        if not config.get("llm_api_key"):
+            print("警告: 未找到API密钥，无法调用AI模型，返回模拟分析")
+            # 返回模拟分析
+            account_id = state["account_id"]
+            stats = state.get("stats", {})
+            
+            risk_warning = "⚠️ 漏水风险警告" if stats.get("has_leak_risk", False) else ""
+            reading_info = f"\n   最新读数 {state['readings'][-1]}，初始读数 {state['readings'][0]}" if state['readings'] and len(state['readings']) > 0 else ""
+            
+            mock_analysis = f"""
+{risk_warning}
+**账户 {account_id} 关键发现**
+**漏水可能性**: {"高" if stats.get("has_leak_risk", False) else "无"}
+1. **记录数量和时间跨度**：{stats.get("record_count", 0)}条记录，覆盖{stats.get("time_span", "未知")}
+2. **异常用水**：{f"存在{stats.get('max_amount', 0)}方的高用水量（{stats.get('max_date', '未知')}）" if stats.get("has_high_usage", False) else "无明显异常用水"}
+3. **漏水风险**：{f"日均用水量达{stats.get('max_daily_avg', 0):.1f}方，超过安全阈值3方" if stats.get("has_high_daily", False) else "无明显漏水风险"}{reading_info}
+4. **历史用水数据**：历史平均日用水量 {stats.get("historical_avg_daily", 0):.2f}方/日
+
+---
+*报告生成时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}*
+"""
+            
+            print("使用模拟分析结果完成")
+            return {
+                **state,
+                "analysis_result": mock_analysis,
+                "success": True
+            }
         
         # 创建LangChain模型
         model = ChatOpenAI(
@@ -1034,13 +1092,11 @@ def call_ai_model(state: GraphState) -> GraphState:
             
             # 显示失败信息
             elapsed_time = time.time() - start_api_time
-            print(f"\r失败! 用时: {elapsed_time:.1f}秒{' ' * 20}")
+            print(f"\r失败! 用时: {elapsed_time:.1f}秒 - 错误: {str(e)}{' ' * 20}")
             
-            return {
-                **state,
-                "success": False,
-                "error": f"AI分析错误: {str(e)}",
-                "analysis_result": f"""# 账户 {state["account_id"]} 分析失败
+            # 返回模拟分析
+            account_id = state["account_id"]
+            mock_analysis = f"""# 账户 {account_id} 分析失败
 
 ## ⚠️ AI分析请求超时
 
@@ -1056,8 +1112,17 @@ def call_ai_model(state: GraphState) -> GraphState:
 ---
 *报告生成时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}*
 """
+            
+            return {
+                **state,
+                "success": False,
+                "error": f"AI分析错误: {str(e)}",
+                "analysis_result": mock_analysis
             }
     except Exception as e:
+        print(f"AI分析过程中发生错误: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return {
             **state,
             "success": False,
@@ -1081,39 +1146,45 @@ def call_ai_model(state: GraphState) -> GraphState:
         }
 
 def save_report(state: GraphState) -> GraphState:
-    """保存分析报告"""
+    """保存分析结果到数据库"""
     config = load_config()
     account_id = state["account_id"]
     
-    # 确保报告目录存在
-    os.makedirs(config["reports_dir"], exist_ok=True)
-    
-    # 设置输出文件路径
-    output_file = os.path.join(config["reports_dir"], f"account_{account_id}_analysis_report.md")
-    
     try:
-        # 写入文件
-        with open(output_file, "w", encoding="utf-8") as f:
-            f.write(state["analysis_result"])
-        
-        # 获取绝对路径
-        report_path = os.path.abspath(output_file)
-        file_url = f"file://{report_path}"
-        
-        # 打印状态
-        if state["success"]:
-            print(f"✓ 账户 {account_id} 分析报告已保存")
+        # 打印状态信息以便调试
+        print(f"\n调试 - 状态信息:")
+        print(f"  account_id: {account_id}")
+        print(f"  success: {state.get('success', False)}")
+        if 'error' in state:
+            print(f"  error: {state['error']}")
+        if 'prompt' in state:
+            print(f"  prompt存在: 是")
         else:
-            print(f"! 账户 {account_id} 分析失败，超时信息已保存")
-        print(f"  报告链接: {file_url}")
+            print(f"  prompt存在: 否")
+        if 'analysis_result' in state:
+            print(f"  analysis_result存在: 是 (长度: {len(state['analysis_result'])})")
+        else:
+            print(f"  analysis_result存在: 否")
+        
+        # 只保存到数据库，不再生成报告文件
+        if state["success"] and "analysis_result" in state and state["analysis_result"]:
+            # 将分析结果保存到数据库
+            save_analysis_to_database(account_id, state["analysis_result"], state.get("stats", {}), config)
+            
+            # 打印状态
+            print(f"✓ 账户 {account_id} 分析结果已保存到数据库")
+        else:
+            print(f"! 账户 {account_id} 分析失败，未保存到数据库")
         
         return state
     except Exception as e:
-        print(f"! 保存报告失败: {str(e)}")
+        print(f"! 保存到数据库失败: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return {
             **state,
             "success": False,
-            "error": f"保存报告错误: {str(e)}"
+            "error": f"保存到数据库错误: {str(e)}"
         }
 
 # 定义如何确定图的路径
@@ -1171,336 +1242,370 @@ def build_workflow():
     
     return workflow.compile()
 
+def initialize_results_db(db_path):
+    """初始化分析结果数据库"""
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # 创建分析结果表
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS analysis_results (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id TEXT NOT NULL,
+            analysis_date TEXT NOT NULL,
+            leak_probability TEXT,
+            risk_warning INTEGER,
+            max_usage REAL,
+            max_usage_date TEXT,
+            avg_usage REAL,
+            max_daily_avg REAL,
+            historical_avg REAL,
+            increase_ratio REAL,
+            abnormal_usage TEXT,
+            leak_risk_text TEXT,
+            full_report TEXT,
+            data_source TEXT,
+            UNIQUE(account_id, analysis_date)
+        )
+        ''')
+        
+        # 创建索引以加快查询
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_account_id ON analysis_results (account_id)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_analysis_date ON analysis_results (analysis_date)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_leak_probability ON analysis_results (leak_probability)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_risk_warning ON analysis_results (risk_warning)')
+        
+        conn.commit()
+        conn.close()
+        
+        print(f"分析结果数据库初始化成功: {db_path}")
+        return True
+    except Exception as e:
+        print(f"初始化分析结果数据库失败: {str(e)}")
+        return False
+
+def extract_leak_probability(analysis_text):
+    """从分析文本中提取漏水可能性评估"""
+    import re
+    
+    # 尝试匹配"漏水可能性：无/低/中/高"模式
+    pattern = r"\*\*漏水可能性\*\*\s*[:：]\s*([无低中高])"
+    match = re.search(pattern, analysis_text)
+    
+    if match:
+        return match.group(1)
+    
+    # 如果没找到，尝试英文匹配
+    pattern = r"\*\*漏水可能性\*\*\s*[:：]\s*(None|Low|Medium|High)"
+    match = re.search(pattern, analysis_text, re.IGNORECASE)
+    
+    if match:
+        # 将英文转换为中文
+        eng_to_cn = {
+            "none": "无",
+            "low": "低",
+            "medium": "中",
+            "high": "高"
+        }
+        return eng_to_cn.get(match.group(1).lower(), "未知")
+    
+    return "未知"
+
+def has_risk_warning(analysis_text):
+    """检查分析是否包含风险警告"""
+    return "⚠️ 漏水风险警告" in analysis_text
+
+def save_analysis_to_database(account_id, analysis_text, stats, config, data_source="local_db"):
+    """将分析结果保存到数据库"""
+    try:
+        conn = sqlite3.connect(config["analysis_results_db"])
+        cursor = conn.cursor()
+        
+        # 提取关键信息
+        leak_probability = extract_leak_probability(analysis_text)
+        risk_warning = 1 if has_risk_warning(analysis_text) else 0
+        
+        # 从stats中获取详细数据
+        max_usage = stats.get("max_amount", 0)
+        max_usage_date = stats.get("max_date", "")
+        avg_usage = stats.get("avg_amount", 0)
+        max_daily_avg = stats.get("max_daily_avg", 0)
+        historical_avg = stats.get("historical_avg_daily", 0)
+        increase_ratio = stats.get("usage_increase_ratio", 1.0)
+        
+        # 提取异常用水和漏水风险文本
+        import re
+        abnormal_usage_pattern = r"2\.\s*\*\*异常用水\*\*\s*[:：]\s*([^\n]+)"
+        abnormal_match = re.search(abnormal_usage_pattern, analysis_text)
+        abnormal_usage = abnormal_match.group(1) if abnormal_match else "无明显异常用水"
+        
+        leak_risk_pattern = r"3\.\s*\*\*漏水风险\*\*\s*[:：]\s*([^\n]+)"
+        leak_match = re.search(leak_risk_pattern, analysis_text)
+        leak_risk_text = leak_match.group(1) if leak_match else "无明显漏水风险"
+        
+        # 获取当前日期作为分析日期
+        analysis_date = datetime.now().strftime("%Y-%m-%d")
+        
+        # 插入或更新数据
+        cursor.execute('''
+        INSERT OR REPLACE INTO analysis_results 
+        (account_id, analysis_date, leak_probability, risk_warning, max_usage, 
+        max_usage_date, avg_usage, max_daily_avg, historical_avg, increase_ratio, 
+        abnormal_usage, leak_risk_text, full_report, data_source)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            account_id, 
+            analysis_date, 
+            leak_probability, 
+            risk_warning, 
+            max_usage, 
+            max_usage_date, 
+            avg_usage, 
+            max_daily_avg, 
+            historical_avg, 
+            increase_ratio, 
+            abnormal_usage, 
+            leak_risk_text, 
+            analysis_text, 
+            data_source
+        ))
+        
+        conn.commit()
+        conn.close()
+        
+        print(f"  账户 {account_id} 分析结果已存入数据库")
+        return True
+    except Exception as e:
+        print(f"  保存分析结果到数据库失败: {str(e)}")
+        traceback.print_exc()
+        return False
+
+def get_account_ids_from_db(db_path):
+    """从数据库获取账户ID列表"""
+    try:
+        # 连接数据库
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # 检查数据库中的表
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = [table[0] for table in cursor.fetchall()]
+        
+        account_ids = []
+        
+        # 尝试从account_data表获取账户ID
+        if 'account_data' in tables:
+            try:
+                cursor.execute("SELECT DISTINCT account_id FROM account_data ORDER BY account_id")
+                account_ids = [row[0] for row in cursor.fetchall()]
+            except sqlite3.OperationalError as e:
+                logging.error(f"从account_data表获取账户ID失败: {str(e)}")
+        
+        # 如果没有找到，尝试从transactions表获取
+        if not account_ids and 'transactions' in tables:
+            try:
+                cursor.execute("SELECT DISTINCT account_id FROM transactions ORDER BY account_id")
+                account_ids = [row[0] for row in cursor.fetchall()]
+            except sqlite3.OperationalError as e:
+                logging.error(f"从transactions表获取账户ID失败: {str(e)}")
+        
+        # 如果还没有找到，尝试从meter_readings表获取
+        if not account_ids and 'meter_readings' in tables:
+            try:
+                cursor.execute("SELECT DISTINCT account_id FROM meter_readings ORDER BY account_id")
+                account_ids = [row[0] for row in cursor.fetchall()]
+            except sqlite3.OperationalError as e:
+                logging.error(f"从meter_readings表获取账户ID失败: {str(e)}")
+        
+        conn.close()
+        return account_ids
+    except Exception as e:
+        logging.error(f"获取账户ID列表失败: {str(e)}")
+        return []
+
+def configure_logging():
+    """配置日志"""
+    import logging
+    
+    # 确保日志目录存在
+    log_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # 设置日志格式
+    log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    logging.basicConfig(
+        level=logging.INFO,
+        format=log_format,
+        handlers=[
+            logging.FileHandler(os.path.join(log_dir, "processing.log")),
+            logging.StreamHandler()
+        ]
+    )
+    
+    # 禁用一些过于详细的日志
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
+    
+    return logging.getLogger(__name__)
+
 def main():
-    """使用LangChain的主函数"""
+    """主函数"""
+    # 设置日志
+    configure_logging()
+    
     # 加载配置
     config = load_config()
     
-    # 创建报告目录
-    os.makedirs(config["reports_dir"], exist_ok=True)
-    print(f"报告将保存到: {config['reports_dir']}")
+    # 初始化结果数据库
+    results_db = os.path.join(config["root_dir"], "data/analysis_results.db")
+    initialize_results_db(results_db)
+    print(f"分析结果数据库初始化成功: {results_db}")
+    print(f"分析结果将保存到数据库: {results_db}")
     
     # 获取账户列表
     try:
-        # 连接主数据库
-        conn = sqlite3.connect(config["account_data_db"])
-        cursor = conn.cursor()
-        cursor.execute("SELECT DISTINCT account_id FROM meter_readings ORDER BY account_id")
-        account_ids = [row[0] for row in cursor.fetchall()]
-        conn.close()
+        account_ids = []
         
-        # 验证历史数据库中的账户
-        conn2 = sqlite3.connect(config["historical_data_db"])
-        cursor2 = conn2.cursor()
-        cursor2.execute("SELECT DISTINCT account_id FROM historical_readings ORDER BY account_id")
-        historical_account_ids = [row[0] for row in cursor2.fetchall()]
-        conn2.close()
+        # 从命令行参数获取账户ID
+        if len(sys.argv) > 1:
+            account_ids = [sys.argv[1]]
+        else:
+            # 查找所有可能的数据库
+            possible_dbs = [
+                os.path.join(config["root_dir"], "data/account_data.db"),
+                os.path.join(config["root_dir"], "data/account_data1.db"),
+                os.path.join(config["root_dir"], "data/account_data2.db")
+            ]
+            
+            # 从所有存在的数据库获取账户ID
+            for db_path in possible_dbs:
+                if os.path.exists(db_path):
+                    print(f"从数据库 {db_path} 获取账户...")
+                    db_account_ids = get_account_ids_from_db(db_path)
+                    if db_account_ids:
+                        print(f"  找到 {len(db_account_ids)} 个账户")
+                        account_ids.extend(db_account_ids)
+                    else:
+                        print(f"  未找到账户")
+            
+            # 去重
+            account_ids = list(set(account_ids))
+            account_ids.sort()
         
-        # 找出两个数据库中共有的账户ID
-        common_account_ids = list(set(account_ids).intersection(set(historical_account_ids)))
+        if not account_ids:
+            print("未找到任何账户ID。请指定账户ID作为参数或确保数据库中有数据。")
+            return
         
-        print(f"找到 {len(account_ids)} 个主数据库账户")
-        print(f"找到 {len(historical_account_ids)} 个历史数据库账户")
-        print(f"两个数据库共有 {len(common_account_ids)} 个账户")
+        print(f"找到 {len(account_ids)} 个账户: {', '.join(account_ids)}")
         
-        # 使用共有的账户ID列表
-        account_ids = common_account_ids
+        # 构建工作流
+        workflow = build_workflow()
+        
+        # 处理每个账户
+        for account_id in account_ids:
+            print(f"\n正在处理账户 {account_id}")
+            
+            # 初始化状态
+            initial_state = GraphState(
+                account_id=account_id,
+                account_data={},
+                analysis_result="",
+                error="",
+                dates=[],
+                readings=[],
+                amounts=[],
+                daily_avgs=[],
+                stats={},
+                success=False
+            )
+            
+            # 声明中间状态
+            last_state = initial_state
+            
+            # 运行工作流, 但直接使用run而不是stream
+            try:
+                # 获取数据
+                data_state = fetch_account_data(initial_state)
+                if not data_state["success"]:
+                    print(f"获取账户数据失败: {data_state.get('error', '未知错误')}")
+                    continue
+                
+                # 计算统计数据
+                stats_state = calculate_statistics(data_state)
+                if not stats_state["success"]:
+                    print(f"计算统计数据失败: {stats_state.get('error', '未知错误')}")
+                    continue
+                    
+                # 创建分析提示
+                prompt_state = create_analysis_prompt(stats_state)
+                if not prompt_state["success"]:
+                    print(f"创建分析提示失败: {prompt_state.get('error', '未知错误')}")
+                    continue
+                
+                # 调用AI模型
+                analysis_state = call_ai_model(prompt_state)
+                
+                # 保存报告
+                final_state = save_report(analysis_state)
+                
+                # 检查结果
+                if final_state.get("success", False):
+                    print(f"账户 {account_id} 分析完成")
+                else:
+                    error = final_state.get("error", "未知错误")
+                    print(f"账户 {account_id} 分析失败: {error}")
+            except Exception as e:
+                print(f"处理账户 {account_id} 时发生错误: {str(e)}")
+                import traceback
+                traceback.print_exc()
+    
     except Exception as e:
         print(f"获取账户列表失败: {str(e)}")
-        return
-    
-    # 创建LangChain组件
-    llm = ChatOpenAI(
-        openai_api_key=config["llm_api_key"],
-        openai_api_base=config["llm_api_base"],
-        model_name="deepseek-ai/DeepSeek-R1",
-        temperature=0.1,
-        max_tokens=800,
-        timeout=120
-    )
-    
-    # 创建系统提示
-    system_prompt = """你是一个简洁高效的水量数据分析工具, 只输出分析结论:
-1. 你只会输出格式化的分析结论, 绝对不会解释你的分析过程
-2. 你永远不会写出"我分析了", "根据数据", "通过分析"等说明分析过程的语句
-3. 你只关注用户提供的格式模板, 并在这个模板中填充你的结论
-4. 你应当拒绝解释你是如何得出结论的
-5. 你的回答必须极其简洁直接, 不包含任何多余内容"""
-    
-    # 创建提示模板
-    human_prompt = """
-请分析以下用水数据，并填充水用量分析报告模板：
+        logging.error(f"主程序异常: {str(e)}", exc_info=True)
 
-## 用户信息
-- 账户ID: {account_id}
-- 读表时间: {last_date}
-- 当前读数: {last_reading}
-- 记录数量: {record_count}条
-- 时间跨度: {time_span}
-
-## 用水数据
-- 最大用水量: {max_amount}方 (发生于{max_date})
-- 最小用水量: {min_amount}方
-- 平均用水量: {avg_amount:.2f}方
-- 最大日均用水量: {max_daily_avg:.2f}方
-- 历史半年日均用水量: {historical_avg_daily:.2f}方
-- 当前与历史用水量比率: {usage_increase_ratio:.2f}
-
-## 异常标准
-- 近期出现两次漏水情况（日均用水>3方）
-- 单次漏水超过5方
-- 最近连续出现超过历史平均用水量一倍的情况
-
-## 填充以下模板（无需解释分析过程）:
-
-```
-{risk_warning}
-**账户 {account_id} 关键发现**
-**漏水可能性**: [请基于上述数据，判断此账户漏水可能性为：无、低、中、高中的一个]
-1. **记录数量和时间跨度**：{record_count}条记录，覆盖{time_span}
-2. **异常用水**：{abnormal_usage}
-3. **漏水风险**：{leak_risk_text}{reading_info}
-4. **历史用水数据**：历史平均日用水量 {historical_avg_daily:.2f}方/日{historical_comparison}
-
----
-*报告生成时间: {generation_time}*
-```
-    """
-    
-    # 创建提示模板对象
-    prompt_template = ChatPromptTemplate.from_messages([
-        ("system", system_prompt),
-        ("human", human_prompt)
-    ])
-    
-    # 创建LangChain链
-    chain = prompt_template | llm | StrOutputParser()
-    
-    # 全局开始时间
-    global_start_time = time.time()
-    
-    # 创建停止事件
-    stop_event = threading.Event()
-    
-    # 为每个账户处理
-    for i, account_id in enumerate(account_ids[:10], 1):
-        print(f"\n[{i}/{min(10, len(account_ids))}] 分析账户 {account_id}...")
+def query_analysis_results(db_path, **filters):
+    """查询分析结果数据库"""
+    try:
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row  # 使结果以字典形式返回
+        cursor = conn.cursor()
         
-        # 记录开始时间
-        account_start_time = time.time()
+        # 构建查询
+        query = "SELECT * FROM analysis_results WHERE 1=1"
+        params = []
         
-        try:
-            # 数据获取开始时间
-            fetch_start = time.time()
-            
-            # 获取账户数据
-            conn = sqlite3.connect(config["account_data_db"])
-            cursor = conn.cursor()
-            cursor.execute(
-                """
-                SELECT 
-                    reading_time,
-                    current_reading,
-                    current_usage,
-                    daily_average
-                FROM meter_readings 
-                WHERE account_id = ? 
-                ORDER BY reading_time
-                """, 
-                (account_id,)
-            )
-            rows = cursor.fetchall()
-            conn.close()
-            
-            # 数据获取耗时
-            fetch_time = time.time() - fetch_start
-            print(f"  主数据获取: {fetch_time:.4f}秒")
-            
-            # 解析数据
-            dates = []
-            readings = []  # current_reading: 抄的水表止度
-            amounts = []   # current_usage: 该日期的抄表用水量
-            daily_avgs = []
-            
-            for row in rows:
-                dates.append(row[0])
-                readings.append(row[1])
-                amounts.append(row[2])
-                daily_avgs.append(row[3])
-                
-            # 获取历史数据
-            fetch_history_start = time.time()
-            conn2 = sqlite3.connect(config["historical_data_db"])
-            cursor2 = conn2.cursor()
-            
-            # 获取最近半年的历史抄表数据
-            from datetime import datetime, timedelta
-            six_months_ago = (datetime.now() - timedelta(days=180)).strftime("%Y/%m/%d")
-            
-            cursor2.execute(
-                """
-                SELECT 
-                    reading_time,
-                    reading_value
-                FROM historical_readings 
-                WHERE account_id = ? AND reading_time >= ?
-                ORDER BY reading_time
-                """, 
-                (account_id, six_months_ago)
-            )
-            
-            history_rows = cursor2.fetchall()
-            conn2.close()
-            
-            # 历史数据获取耗时
-            fetch_history_time = time.time() - fetch_history_start
-            print(f"  历史数据获取: {fetch_history_time:.4f}秒")
-            
-            # 处理历史数据
-            historical_data = process_historical_data(history_rows)
-            historical_daily_avg = historical_data["historical_daily_avg"]
-            
-            # 计算统计数据
-            amounts_float = [float(amount) for amount in amounts]  # current_usage: 该日期的用水量
-            avg_amount = sum(amounts_float) / len(amounts_float) if amounts_float else 0
-            max_amount = max(amounts_float) if amounts_float else 0
-            max_date = dates[amounts_float.index(max(amounts_float))] if amounts_float else "未知"
-            min_amount = min(amounts_float) if amounts_float else 0
-            time_span = f"{dates[0]} 至 {dates[-1]}" if dates else "未知"
-            record_count = len(dates)
-            
-            # 计算风险相关数据 - 使用current_usage判断是否超过5方
-            has_high_usage = any(float(amount) > 5 for amount in amounts)
-            max_daily_avg = max([float(avg) for avg in daily_avgs]) if daily_avgs else 0
-            
-            # 检查近期是否有两次漏水情况 - 用daily_average判断
-            recent_daily_avgs = [float(avg) for avg in daily_avgs[-5:]] if len(daily_avgs) > 5 else [float(avg) for avg in daily_avgs]
-            leak_count = sum(1 for avg in recent_daily_avgs if avg > 3)
-            has_multiple_leaks = leak_count >= 2
-            
-            # 检查是否连续超过历史平均用水量一倍 - 使用current_usage判断
-            has_continuous_high_usage = False
-            if historical_daily_avg > 0 and len(amounts_float) >= 3:
-                recent_amounts = amounts_float[-3:]
-                recent_ratios = [amount / historical_daily_avg for amount in recent_amounts]
-                has_continuous_high_usage = all(ratio > 2.0 for ratio in recent_ratios)
-            
-            # 综合风险判断 - 使用新的标准
-            has_leak_risk = has_high_usage or has_multiple_leaks or has_continuous_high_usage
-            
-            # 准备提示变量 - 明确说明读数是水表止度
-            reading_info = f"\n   最新水表止度 {readings[-1]}，初始水表止度 {readings[0]}" if readings and len(readings) > 0 else ""
-            
-            # 添加历史数据对比信息
-            historical_comparison = ""
-            if historical_daily_avg > 0:
-                increase_ratio = avg_amount / historical_daily_avg
-                increase_percent = (increase_ratio - 1) * 100
-                historical_comparison = f"，比历史增加了{increase_percent:.1f}%"
-            
-            risk_warning = "⚠️ 漏水风险警告" if has_leak_risk else ""
-            abnormal_usage = f"单日用水量达{max_amount}方（{max_date}）" if has_high_usage else "无明显异常用水"
-            
-            # 更新漏水风险文本，根据满足的条件提供更详细的信息
-            leak_risk_text = "无明显漏水风险"
-            if has_multiple_leaks:
-                leak_risk_text = f"近期出现{leak_count}次日均用水超过3方的情况，可能存在漏水"
-            elif has_high_usage:
-                leak_risk_text = f"单日用水量达{max_amount}方，超过5方阈值，可能存在漏水"
-            elif has_continuous_high_usage:
-                leak_risk_text = f"最近连续{len(recent_amounts)}次用水量均超过历史平均用水量一倍，可能存在漏水"
-            
-            generation_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            
-            # 调用LangChain链
-            print(f"\r等待API响应... ", end="", flush=True)
-            
-            # 注意使用正确的变量名称
-            analysis = chain.invoke({
-                "account_id": account_id,
-                "last_date": dates[-1] if dates else "未知",
-                "last_reading": readings[-1] if readings else "未知",
-                "record_count": record_count,
-                "time_span": time_span,
-                "max_amount": max_amount,
-                "max_date": max_date,
-                "min_amount": min_amount,
-                "avg_amount": avg_amount,
-                "max_daily_avg": max_daily_avg,
-                "historical_avg_daily": historical_daily_avg,
-                "usage_increase_ratio": avg_amount / historical_daily_avg if historical_daily_avg > 0 else 1.0,
-                "risk_warning": risk_warning,
-                "abnormal_usage": abnormal_usage,
-                "leak_risk_text": leak_risk_text,
-                "reading_info": reading_info,
-                "historical_comparison": historical_comparison,
-                "generation_time": generation_time
-            })
-            
-            # 处理响应
-            elapsed_time = time.time() - account_start_time
-            print(f"\r完成! 用时: {elapsed_time:.1f}秒{' ' * 20}")
-            
-            # 后处理：提取代码块
-            import re
-            code_pattern = r"```(?:markdown)?\s*([\s\S]*?)\s*```"
-            code_matches = re.findall(code_pattern, analysis)
-            if code_matches:
-                analysis = code_matches[0].strip()
-            
-            # 保存分析结果
-            output_file = os.path.join(config["reports_dir"], f"account_{account_id}_analysis_report.md")
-            with open(output_file, "w", encoding="utf-8") as f:
-                f.write(analysis)
-            
-            # 获取报告的绝对路径
-            report_path = os.path.abspath(output_file)
-            file_url = f"file://{report_path}"
-            
-            # 打印结果
-            print(f"✓ 账户 {account_id} 分析报告已保存")
-            print(f"  报告链接: {file_url}")
-            
-        except Exception as e:
-            elapsed_time = time.time() - account_start_time
-            print(f"\r失败! 用时: {elapsed_time:.1f}秒{' ' * 20}")
-            print(f"! 处理账户 {account_id} 时出错: {type(e).__name__}: {str(e)}")
-            traceback.print_exc()  # 打印完整的堆栈跟踪
-            
-            # 生成错误报告
-            error_report = f"""# 账户 {account_id} 分析失败
-
-## ⚠️ 分析过程中出错
-
-处理过程中发生错误: {type(e).__name__}
-
-详细信息: {str(e)}
-
-请考虑以下可能的解决方案:
-1. 检查数据库连接和数据完整性
-2. 检查API密钥和网络连接是否正常
-3. 如果问题持续出现, 请联系系统管理员
-
-**注意**: 由于分析未完成, 无法提供漏水可能性评估(无/低/中/高)
-
----
-*报告生成时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}*
-"""
-            
-            # 保存错误报告
-            output_file = os.path.join(config["reports_dir"], f"account_{account_id}_analysis_report.md")
-            with open(output_file, "w", encoding="utf-8") as f:
-                f.write(error_report)
-                
-            # 获取报告的绝对路径
-            report_path = os.path.abspath(output_file)
-            file_url = f"file://{report_path}"
-            
-            # 打印结果
-            print(f"! 账户 {account_id} 分析失败，错误信息已保存")
-            print(f"  报告链接: {file_url}")
-    
-    print("\n分析完成! 报告文件已保存在报告目录")
+        # 应用过滤器
+        if "account_id" in filters:
+            query += " AND account_id = ?"
+            params.append(filters["account_id"])
+        
+        if "analysis_date" in filters:
+            query += " AND analysis_date = ?"
+            params.append(filters["analysis_date"])
+        
+        if "leak_probability" in filters:
+            query += " AND leak_probability = ?"
+            params.append(filters["leak_probability"])
+        
+        if "risk_warning" in filters:
+            query += " AND risk_warning = ?"
+            params.append(1 if filters["risk_warning"] else 0)
+        
+        # 排序
+        query += " ORDER BY analysis_date DESC, account_id"
+        
+        # 执行查询
+        cursor.execute(query, params)
+        results = cursor.fetchall()
+        
+        # 转换为字典列表
+        results_list = [dict(row) for row in results]
+        
+        conn.close()
+        return results_list
+    except Exception as e:
+        print(f"查询分析结果数据库失败: {str(e)}")
+        return []
 
 if __name__ == "__main__":
     main() 

@@ -1,0 +1,54 @@
+# Python相关文件
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 虚拟环境
+venv/
+env/
+ENV/
+
+# 日志文件
+*.log
+
+# 数据库文件
+*.db
+*.sqlite3
+
+# macOS相关文件
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# 本地配置文件
+.env
+.env.local
+
+# IDE相关文件
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 其他
+.coverage
+htmlcov/
+.pytest_cache/ 

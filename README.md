@@ -1,66 +1,86 @@
-# 大规模账号数据处理系统
+# 水用量分析报告系统
 
-这是一个使用 LangGraph 构建的智能体系统，用于处理大规模账号数据。系统可以同时处理多个账号，每个账号包含两个不同数据库的数据。
+这个系统用于分析用户的水用量数据，检测可能的漏水情况，并生成分析报告。
 
-## 功能特点
+## 主要功能
 
-- 支持多种数据库类型（SQL和MongoDB）
-- 使用LangGraph构建的智能体系统
-- 并发处理多个账号
-- 完善的错误处理和日志记录
-- 可配置的处理参数
+1. **数据获取**：支持从本地数据库或MCP服务器获取数据
+2. **漏水检测**：基于三种条件判断漏水可能性
+   - 近期出现两次漏水情况（日均用水>3方）
+   - 单次漏水超过5方
+   - 最近连续出现超过历史平均用水量一倍的情况
+3. **报告生成**：生成Markdown格式的详细分析报告
+4. **数据存储**：将分析结果保存到数据库中，方便后续查询
 
-## 安装
+## 数据库存储
 
-1. 克隆仓库：
-```bash
-git clone <repository-url>
-cd langgraph-demo
-```
+系统会将分析结果存储在SQLite数据库中，包含以下信息：
 
-2. 安装依赖：
-```bash
-pip install -r requirements.txt
-```
-
-3. 配置环境变量：
-```bash
-cp .env.example .env
-# 编辑 .env 文件，填入实际的配置信息
-```
+- **账户ID**：水表账户的唯一标识
+- **漏水可能性**：无、低、中、高
+- **详细数据**：包括最大用水量、平均用水量、日均用水量等
+- **异常分析**：记录异常用水情况和漏水风险描述
+- **完整报告**：保存完整的分析报告文本
 
 ## 使用方法
 
-1. 准备账号列表：
-创建一个 `account_ids.txt` 文件，每行一个账号ID。
+### 运行分析
 
-2. 运行程序：
 ```bash
 python src/main.py
 ```
 
-## 系统架构
+此命令将分析所有账户的用水数据，生成报告并存储到数据库中。
 
-- `src/data_access.py`: 数据访问层，处理数据库连接和数据获取
-- `src/agents.py`: 智能体系统，使用LangGraph构建的工作流
-- `src/main.py`: 主程序，协调整个处理流程
+### 查询结果
 
-## 配置说明
+```bash
+# 显示统计信息
+python src/query_results.py stats
 
-在 `.env` 文件中配置以下参数：
+# 查询特定账户
+python src/query_results.py query --account 2226970
 
-- 数据库连接信息
-- MongoDB配置
-- LLM模型配置
-- 并发处理参数
+# 查询有风险的账户
+python src/query_results.py query --risk
 
-## 日志
+# 按漏水可能性查询
+python src/query_results.py query --probability 高
 
-系统使用 loguru 进行日志记录，日志文件保存在 `processing.log` 中。
+# 导出结果为CSV格式
+python src/query_results.py query --risk --export results.csv
+```
 
-## 注意事项
+## 配置MCP服务器
 
-1. 确保有足够的系统资源处理大量账号
-2. 根据实际需求调整并发处理数量
-3. 定期检查日志文件大小
-4. 确保数据库连接信息正确 
+如需使用MCP服务器，请在`.env`文件中配置以下参数：
+
+```
+USE_MCP_SERVER=true
+MCP_SERVER_HOST=您的MCP服务器地址
+MCP_SERVER_PORT=5000
+MCP_SERVER_PATH=/api/data
+MCP_AUTH_TOKEN=您的认证令牌
+```
+
+## 数据库表结构
+
+分析结果存储在`data/analysis_results.db`文件中，表结构如下：
+
+| 字段名            | 类型      | 描述                       |
+|------------------|-----------|----------------------------|
+| id               | INTEGER   | 自增主键                   |
+| account_id       | TEXT      | 账户ID                     |
+| analysis_date    | TEXT      | 分析日期                   |
+| leak_probability | TEXT      | 漏水可能性(无/低/中/高)    |
+| risk_warning     | INTEGER   | 是否有风险警告(0/1)        |
+| max_usage        | REAL      | 最大用水量                 |
+| max_usage_date   | TEXT      | 最大用水量日期             |
+| avg_usage        | REAL      | 平均用水量                 |
+| max_daily_avg    | REAL      | 最大日均用水量             |
+| historical_avg   | REAL      | 历史日均用水量             |
+| increase_ratio   | REAL      | 当前与历史用水量比率       |
+| abnormal_usage   | TEXT      | 异常用水描述               |
+| leak_risk_text   | TEXT      | 漏水风险描述               |
+| full_report      | TEXT      | 完整分析报告               |
+| data_source      | TEXT      | 数据来源(local_db/mcp_server) |
