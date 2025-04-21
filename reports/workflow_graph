@@ -1,0 +1,21 @@
+// 水量分析工作流
+digraph {
+	rankdir=LR
+	fetch_data [label="获取数据"]
+	calculate_stats [label="计算统计数据"]
+	create_prompt [label="创建提示"]
+	analyze_data [label="调用AI分析"]
+	save_report [label="保存报告"]
+	error_handler [label="错误处理"]
+	END [label="结束" shape=doublecircle]
+	fetch_data -> calculate_stats
+	calculate_stats -> create_prompt [label="成功"]
+	calculate_stats -> error_handler [label="失败"]
+	create_prompt -> analyze_data [label="成功"]
+	create_prompt -> error_handler [label="失败"]
+	analyze_data -> save_report [label="成功"]
+	analyze_data -> error_handler [label="失败"]
+	error_handler -> save_report
+	save_report -> END
+	node [color=lightblue shape=box style=filled]
+}

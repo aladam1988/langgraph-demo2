@@ -1,0 +1,217 @@
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水量分析工作流程图</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+            color: #333;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .workflow-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px auto;
+            max-width: 1200px;
+        }
+        .main-flow {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .node-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 5px;
+        }
+        .node {
+            background-color: #3498db;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            width: 120px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        .node:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .node.start {
+            background-color: #9b59b6;
+        }
+        .node.end {
+            background-color: #27ae60;
+        }
+        .error-handler {
+            background-color: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            width: 120px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .error-flows {
+            display: flex;
+            flex-direction: column;
+            margin-top: 30px;
+            width: 100%;
+        }
+        .horizontal-arrow {
+            color: #7f8c8d;
+            font-size: 24px;
+            margin: 0 5px;
+            display: flex;
+            align-items: center;
+        }
+        .vertical-arrow {
+            color: #e74c3c;
+            font-size: 24px;
+            margin: 5px 0;
+        }
+        .error-label {
+            font-size: 12px;
+            color: #e74c3c;
+            margin-top: 5px;
+        }
+        .success-label {
+            font-size: 12px;
+            color: #27ae60;
+            margin-bottom: 5px;
+        }
+        .description {
+            margin: 30px auto;
+            background-color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 800px;
+            line-height: 1.6;
+        }
+        .error-connection {
+            border-top: 2px dashed #e74c3c;
+            width: 100%;
+            position: relative;
+            margin: 15px 0;
+        }
+        .error-return {
+            border-left: 2px dashed #e74c3c;
+            height: 30px;
+            margin-right: 10px;
+        }
+        .label {
+            font-size: 12px;
+            margin: 3px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>水量分析工作流程图</h1>
+    
+    <div class="workflow-container">
+        <!-- 主流程(横版) -->
+        <div class="main-flow">
+            <div class="node-container">
+                <div class="node start">开始</div>
+            </div>
+            <div class="horizontal-arrow">→</div>
+            
+            <div class="node-container">
+                <div class="success-label">获取</div>
+                <div class="node" title="fetch_account_data">获取数据</div>
+                <div class="error-label">失败</div>
+            </div>
+            <div class="horizontal-arrow">→</div>
+            
+            <div class="node-container">
+                <div class="success-label">成功</div>
+                <div class="node" title="calculate_statistics">计算统计</div>
+                <div class="error-label">失败</div>
+            </div>
+            <div class="horizontal-arrow">→</div>
+            
+            <div class="node-container">
+                <div class="success-label">成功</div>
+                <div class="node" title="create_analysis_prompt">创建提示</div>
+                <div class="error-label">失败</div>
+            </div>
+            <div class="horizontal-arrow">→</div>
+            
+            <div class="node-container">
+                <div class="success-label">成功</div>
+                <div class="node" title="call_ai_model">调用AI</div>
+                <div class="error-label">失败</div>
+            </div>
+            <div class="horizontal-arrow">→</div>
+            
+            <div class="node-container">
+                <div class="success-label">保存</div>
+                <div class="node" title="save_report">保存报告</div>
+            </div>
+            <div class="horizontal-arrow">→</div>
+            
+            <div class="node-container">
+                <div class="node end">结束</div>
+            </div>
+        </div>
+        
+        <!-- 错误处理连接 -->
+        <div class="error-flows">
+            <div class="error-connection"></div>
+            <div style="display:flex; justify-content:center; align-items:center;">
+                <div style="display:flex; flex-direction:column; align-items:center;">
+                    <div class="vertical-arrow">↓</div>
+                    <div class="error-handler">错误处理</div>
+                    <div class="vertical-arrow">↓</div>
+                </div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; margin-right:280px;">
+                <div class="error-return"></div>
+                <div style="display:flex; align-items:center;">
+                    <div class="horizontal-arrow">→</div>
+                    <span style="font-size:12px; color:#7f8c8d;">错误处理后继续保存</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="description">
+        <h3>工作流程说明</h3>
+        <p>此工作流程用于分析水量数据，识别潜在的漏水风险。主要流程按照从左到右的顺序执行：</p>
+        <ol>
+            <li><strong>获取数据</strong>：从数据库中获取账户的用水数据</li>
+            <li><strong>计算统计</strong>：计算用水量统计信息，包括平均值、最大值等</li>
+            <li><strong>创建提示</strong>：根据统计数据创建AI模型的提示信息</li>
+            <li><strong>调用AI</strong>：使用DeepSeek-R1模型分析用水数据</li>
+            <li><strong>保存报告</strong>：将分析结果保存到数据库</li>
+        </ol>
+        <p>任何步骤失败都会进入下方的错误处理流程，错误处理完成后仍会保存可用结果。</p>
+    </div>
+</body>
+</html>
+        
