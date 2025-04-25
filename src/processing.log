@@ -19,3 +19,24 @@
 2025-04-04 22:43:59.710 | ERROR    | __main__:main:580 - 账户 1 分析失败: 400 Client Error: Bad Request for url: https://api.siliconflow.cn/v1/chat/completions
 2025-04-04 22:43:59.711 | INFO     | __main__:close:120 - 数据库连接已关闭
 2025-04-04 22:43:59.711 | INFO     | __main__:main:593 - 分析完成
+2025-04-19 22:00:36,801 - openai._base_client - INFO - Retrying request to /chat/completions in 0.443341 seconds
+2025-04-20 10:48:38,327 - openai._base_client - INFO - Retrying request to /chat/completions in 0.446359 seconds
+2025-04-20 11:00:12,151 - openai._base_client - INFO - Retrying request to /chat/completions in 0.444888 seconds
+2025-04-20 11:21:37,917 - openai._base_client - INFO - Retrying request to /chat/completions in 0.394040 seconds
+2025-04-20 11:22:38,445 - openai._base_client - INFO - Retrying request to /chat/completions in 0.791249 seconds
+2025-04-20 11:26:37,386 - openai._base_client - INFO - Retrying request to /chat/completions in 0.479497 seconds
+2025-04-20 11:34:21,945 - openai._base_client - INFO - Retrying request to /chat/completions in 0.384635 seconds
+2025-04-20 11:35:22,474 - openai._base_client - INFO - Retrying request to /chat/completions in 0.779500 seconds
+2025-04-20 11:40:33,847 - openai._base_client - INFO - Retrying request to /chat/completions in 0.419389 seconds
+2025-04-20 11:43:14,582 - openai._base_client - INFO - Retrying request to /chat/completions in 0.457015 seconds
+2025-04-20 11:44:15,169 - openai._base_client - INFO - Retrying request to /chat/completions in 0.965947 seconds
+2025-04-20 11:44:24,797 - openai._base_client - INFO - Retrying request to /chat/completions in 0.420500 seconds
+2025-04-20 11:48:19,524 - openai._base_client - INFO - Retrying request to /chat/completions in 0.390040 seconds
+2025-04-20 11:49:19,918 - openai._base_client - INFO - Retrying request to /chat/completions in 0.790523 seconds
+2025-04-20 11:49:57,769 - openai._base_client - INFO - Retrying request to /chat/completions in 0.375720 seconds
+2025-04-20 11:53:10,441 - openai._base_client - INFO - Retrying request to /chat/completions in 0.486633 seconds
+2025-04-20 11:54:25,832 - openai._base_client - INFO - Retrying request to /chat/completions in 0.408211 seconds
+2025-04-20 11:56:49,327 - openai._base_client - INFO - Retrying request to /chat/completions in 0.386398 seconds
+2025-04-20 11:57:49,830 - openai._base_client - INFO - Retrying request to /chat/completions in 0.901303 seconds
+2025-04-20 11:58:04,774 - openai._base_client - INFO - Retrying request to /chat/completions in 0.396628 seconds
+2025-04-20 12:00:41,544 - openai._base_client - INFO - Retrying request to /chat/completions in 0.437285 seconds
